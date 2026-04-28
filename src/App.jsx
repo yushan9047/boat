@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MapContainer,
   TileLayer,
   Polygon,
   ImageOverlay,
+  CircleMarker,
+  Tooltip,
   useMap,
 } from "react-leaflet";
 import {
@@ -68,7 +70,7 @@ export default function App() {
         if (prev + 1 >= MONITOR_POINTS.length) return prev;
         return prev + 1;
       });
-    }, 2500);
+    }, 2000);
 
     return () => clearInterval(timer);
   }, [currentIndex, isRunning]);
@@ -93,9 +95,9 @@ export default function App() {
   const statusText =
     currentRound.length === 0
       ? `第 ${roundNumber} 輪監測準備中`
-      : currentRound.length < 5
-      ? `第 ${roundNumber} 輪監測中：已收到 ${currentRound.length}/5 點`
-      : "五點資料已完成，正在更新論文式熱圖";
+      : currentRound.length < MONITOR_POINTS.length
+      ? `第 ${roundNumber} 輪監測中：已收到 ${currentRound.length}/${MONITOR_POINTS.length} 點`
+      : "十點資料已完成，正在更新論文式熱圖";
 
   return (
     <div className="app">
@@ -104,7 +106,7 @@ export default function App() {
           <p className="eyebrow">USV Water Quality Monitoring</p>
           <h1>無人船 CO₂ / CH₄ 湖面熱圖 Dashboard</h1>
           <p className="subtitle">
-            目前使用五點模擬資料，完成一輪後以 IDW 插值產生連續湖面熱圖。
+            目前使用 P1–P10 模擬資料，完成一輪後以 IDW 插值產生連續湖面熱圖。
           </p>
         </div>
 
@@ -160,8 +162,8 @@ export default function App() {
               <Polygon
                 positions={LAKE_POLYGON}
                 pathOptions={{
-                  color: "#1f4f46",
-                  weight: 2,
+                  color: "#12372f",
+                  weight: 2.5,
                   fillColor: "#dbeee9",
                   fillOpacity: heatmapResult ? 0.08 : 0.45,
                 }}
@@ -174,12 +176,34 @@ export default function App() {
                   opacity={0.88}
                 />
               )}
+
+              {displayData.map((point) => (
+                <CircleMarker
+                  key={point.point_id}
+                  center={[point.lat, point.lng]}
+                  radius={6}
+                  pathOptions={{
+                    color: "#ffffff",
+                    weight: 2,
+                    fillColor: "#1f4f46",
+                    fillOpacity: 1,
+                  }}
+                >
+                  <Tooltip permanent direction="top" offset={[0, -6]} opacity={1}>
+                    <span style={{ fontSize: "12px", fontWeight: "bold" }}>
+                      {point.point_id}
+                    </span>
+                  </Tooltip>
+                </CircleMarker>
+              ))}
             </MapContainer>
 
             {!heatmapResult && (
               <div className="waiting-layer">
-                <strong>等待五個監測點完成</strong>
-                <span>目前已收到 {currentRound.length}/5 點</span>
+                <strong>等待 P1–P10 監測完成</strong>
+                <span>
+                  目前已收到 {currentRound.length}/{MONITOR_POINTS.length} 點
+                </span>
               </div>
             )}
 
@@ -225,7 +249,7 @@ export default function App() {
           </section>
 
           <section className="panel table-panel">
-            <h2>本輪五點資料</h2>
+            <h2>本輪 P1–P10 資料</h2>
 
             <table>
               <thead>
