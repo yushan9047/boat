@@ -23,6 +23,8 @@ const COLOR_STOPS = [
   [1.0, [215, 25, 28]],
 ];
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 function BoundsFitter() {
   const map = useMap();
 
@@ -102,12 +104,20 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div>
-          <p className="eyebrow">USV Water Quality Monitoring</p>
-          <h1>無人船 CO₂ / CH₄ 湖面熱圖 Dashboard</h1>
-          <p className="subtitle">
-            目前使用 P1–P10 模擬資料，完成一輪後以 IDW 插值產生連續湖面熱圖。
-          </p>
+        <div className="header-left">
+          <img
+            src={`${BASE_URL}校徽.jpg`}
+            alt="校徽"
+            className="school-logo"
+          />
+
+          <div className="title-group">
+            <p className="eyebrow">USV WATER QUALITY MONITORING</p>
+            <h1>無人船 CO₂ / CH₄ 湖面熱圖 Dashboard</h1>
+            <p className="subtitle">
+              P1–P10 監測點｜IDW 插值｜湖面空間分布分析
+            </p>
+          </div>
         </div>
 
         <div className="status-card">
