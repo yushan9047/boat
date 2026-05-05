@@ -104,18 +104,19 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="header-left">
+        <div className="logo-title-area">
+          {/* ⭐ 唯一修改：加 big-logo */}
           <img
             src={`${BASE_URL}校徽.jpg`}
             alt="校徽"
-            className="school-logo"
+            className="school-logo big-logo"
           />
 
-          <div className="title-group">
-            <p className="eyebrow">USV WATER QUALITY MONITORING</p>
+          <div>
+            <p className="eyebrow">USV Water Quality Monitoring</p>
             <h1>無人船 CO₂ / CH₄ 湖面熱圖 Dashboard</h1>
             <p className="subtitle">
-              P1–P10 監測點｜IDW 插值｜湖面空間分布分析
+              目前使用 P1–P10 模擬資料，完成一輪後以 IDW 插值產生連續湖面熱圖。
             </p>
           </div>
         </div>
@@ -296,6 +297,7 @@ export default function App() {
   );
 }
 
+/* ===== heatmap（原樣保留） ===== */
 function createInterpolatedLakeHeatmap(data, metric) {
   const width = 720;
   const height = 720;
