@@ -105,12 +105,19 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="logo-title-area">
-          {/* ⭐ 唯一修改：加 big-logo */}
-          <img
-            src={`${BASE_URL}校徽.jpg`}
-            alt="校徽"
-            className="school-logo big-logo"
-          />
+          <div className="logo-group">
+            <img
+              src={`${BASE_URL}NCKU.png`}
+              alt="國立成功大學校徽"
+              className="school-logo big-logo"
+            />
+
+            <img
+              src={`${BASE_URL}MOU.png`}
+              alt="水利署 Logo"
+              className="school-logo big-logo"
+            />
+          </div>
 
           <div>
             <p className="eyebrow">USV Water Quality Monitoring</p>

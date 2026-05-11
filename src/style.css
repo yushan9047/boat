@@ -381,3 +381,10 @@ td {
     height: 480px;
   }
 }
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
