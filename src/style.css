@@ -14,11 +14,12 @@ body {
   padding: 28px;
 }
 
+/* 上方 header 改成跟下面 layout 一樣的欄寬 */
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) 0.85fr;
   gap: 24px;
+  align-items: flex-start;
   margin-bottom: 24px;
 }
 
@@ -80,8 +81,10 @@ h1 {
   color: #667a75;
 }
 
+/* 監測狀態框：寬度改成 100%，會跟右側 Summary 同寬 */
 .status-card {
-  min-width: 320px;
+  width: 100%;
+  min-width: 0;
   display: flex;
   gap: 14px;
   align-items: center;
@@ -107,6 +110,7 @@ h1 {
   height: 14px;
   border-radius: 99px;
   background: #999;
+  flex-shrink: 0;
 }
 
 .status-dot.active {
@@ -114,6 +118,7 @@ h1 {
   box-shadow: 0 0 0 6px rgba(45, 122, 107, 0.15);
 }
 
+/* 主內容也維持一樣的欄寬，才能上下對齊 */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1.75fr) 0.85fr;
@@ -337,12 +342,9 @@ td {
 }
 
 @media (max-width: 1100px) {
+  .header,
   .layout {
     grid-template-columns: 1fr;
-  }
-
-  .header {
-    flex-direction: column;
   }
 
   .logo-title-area {
