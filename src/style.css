@@ -14,7 +14,7 @@ body {
   padding: 28px;
 }
 
-/* 上方 header 改成跟下面 layout 一樣的欄寬 */
+/* 上方 header 跟下面 layout 使用一樣欄寬，讓右側監測狀態跟 Summary 對齊 */
 .header {
   display: grid;
   grid-template-columns: minmax(0, 1.75fr) 0.85fr;
@@ -81,7 +81,7 @@ h1 {
   color: #667a75;
 }
 
-/* 監測狀態框：寬度改成 100%，會跟右側 Summary 同寬 */
+/* 監測狀態框：跟右側 Summary 同寬，並稍微下移 */
 .status-card {
   width: 100%;
   min-width: 0;
@@ -93,6 +93,7 @@ h1 {
   border-radius: 18px;
   padding: 18px;
   box-shadow: 0 12px 30px rgba(18, 55, 47, 0.08);
+  margin-top: 22px;
 }
 
 .status-card p {
@@ -353,6 +354,7 @@ td {
 
   .status-card {
     width: 100%;
+    margin-top: 0;
   }
 
   .map-wrapper {
