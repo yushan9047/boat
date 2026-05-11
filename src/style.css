@@ -22,7 +22,7 @@ body {
   margin-bottom: 24px;
 }
 
-/* ✅ 校徽與標題區：只調整這裡，讓校徽變成正式網站感 */
+/* 校徽與標題區 */
 .logo-title-area {
   display: flex;
   align-items: center;
@@ -30,24 +30,33 @@ body {
   min-width: 0;
 }
 
-/* ✅ 校徽本體：放大、對齊標題、像成大網站品牌區 */
+/* 兩個 logo 的群組 */
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+/* Logo 外框大小固定，讓 NCKU 與 MOU 視覺尺寸一致 */
 .school-logo {
-  width: 210px;
-  height: auto;
+  width: 260px;
+  height: 92px;
   object-fit: contain;
   display: block;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(216, 231, 226, 0.9);
   border-radius: 16px;
-  padding: 12px 18px;
+  padding: 14px 22px;
   box-shadow: 0 10px 24px rgba(18, 55, 47, 0.06);
 }
 
-/* 保留你 App.jsx 裡的 big-logo class，但不要讓它破壞設計 */
+/* 保留 App.jsx 裡面的 big-logo class，但統一尺寸 */
 .big-logo {
-  width: 210px !important;
-  height: auto !important;
+  width: 260px !important;
+  height: 92px !important;
+  object-fit: contain !important;
 }
 
 .eyebrow {
@@ -359,9 +368,17 @@ td {
     gap: 16px;
   }
 
+  .logo-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
   .school-logo,
   .big-logo {
-    width: 190px !important;
+    width: 220px !important;
+    height: 82px !important;
+    object-fit: contain !important;
   }
 
   h1 {
@@ -380,11 +397,4 @@ td {
   .map-wrapper {
     height: 480px;
   }
-}
-
-.logo-group {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-shrink: 0;
 }
