@@ -393,3 +393,14 @@ td {
     height: 480px;
   }
 }
+
+.metric-group {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.metric-group button {
+  white-space: nowrap;
+  font-size: 14px;
+}

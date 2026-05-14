@@ -24,6 +24,14 @@ const COLOR_STOPS = [
   [1.0, [215, 25, 28]],
 ];
 
+const METRIC_CONFIG = {
+  co2: { label: "CO₂", unit: "ppm", decimal: 2 },
+  ch4: { label: "CH₄", unit: "ppm", decimal: 4 },
+  transparency: { label: "透明度", unit: "m", decimal: 2 },
+  chlorophyllA: { label: "葉綠素 a", unit: "μg/L", decimal: 2 },
+  totalPhosphorus: { label: "總磷", unit: "μg/L", decimal: 2 },
+};
+
 const BASE_URL = import.meta.env.BASE_URL;
 
 function BoundsFitter() {
@@ -85,14 +93,13 @@ export default function App() {
     return createInterpolatedLakeHeatmap(displayData, metric);
   }, [displayData, metric]);
 
-  const metricLabel = metric === "co2" ? "CO₂" : "CH₄";
-  const decimal = metric === "co2" ? 2 : 4;
+  const metricInfo = METRIC_CONFIG[metric];
+  const values = displayData.map((item) => item[metric]).filter((v) => typeof v === "number");
 
-  const values = displayData.map((item) => item[metric]);
-  const minValue = values.length ? Math.min(...values).toFixed(decimal) : "-";
-  const maxValue = values.length ? Math.max(...values).toFixed(decimal) : "-";
+  const minValue = values.length ? Math.min(...values).toFixed(metricInfo.decimal) : "-";
+  const maxValue = values.length ? Math.max(...values).toFixed(metricInfo.decimal) : "-";
   const avgValue = values.length
-    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(decimal)
+    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(metricInfo.decimal)
     : "-";
 
   const statusText =
@@ -107,11 +114,7 @@ export default function App() {
       <header className="header">
         <div className="logo-title-area">
           <div className="logo-stack">
-            <img
-              src={`${BASE_URL}NCKU.png`}
-              alt="NCKU"
-              className="school-logo"
-            />
+            <img src={`${BASE_URL}NCKU.png`} alt="NCKU" className="school-logo" />
             <img src={`${BASE_URL}MOU.png`} alt="MOU" className="mou-logo" />
           </div>
 
@@ -137,23 +140,20 @@ export default function App() {
         <section className="panel map-panel">
           <div className="panel-header">
             <div>
-              <h2>{metricLabel} Spatial Distribution</h2>
+              <h2>{metricInfo.label} Spatial Distribution</h2>
               <p>Lake center：23.050278, 120.146667</p>
             </div>
 
-            <div className="button-group">
-              <button
-                className={metric === "co2" ? "active" : ""}
-                onClick={() => setMetric("co2")}
-              >
-                CO₂
-              </button>
-              <button
-                className={metric === "ch4" ? "active" : ""}
-                onClick={() => setMetric("ch4")}
-              >
-                CH₄
-              </button>
+            <div className="button-group metric-group">
+              {Object.entries(METRIC_CONFIG).map(([key, item]) => (
+                <button
+                  key={key}
+                  className={metric === key ? "active" : ""}
+                  onClick={() => setMetric(key)}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -248,7 +248,9 @@ export default function App() {
             )}
 
             <div className="legend">
-              <div className="legend-title">{metricLabel} ppm</div>
+              <div className="legend-title">
+                {metricInfo.label} {metricInfo.unit}
+              </div>
               <div className="legend-bar" />
               <div className="legend-values">
                 <span>{heatmapResult?.minText ?? minValue}</span>
@@ -260,23 +262,23 @@ export default function App() {
 
         <aside className="side">
           <section className="panel stats-panel">
-            <h2>{metricLabel} Summary</h2>
+            <h2>{metricInfo.label} Summary</h2>
 
             <div className="stats-grid">
               <div className="stat-card">
                 <span>平均值</span>
                 <strong>{avgValue}</strong>
-                <small>ppm</small>
+                <small>{metricInfo.unit}</small>
               </div>
               <div className="stat-card">
                 <span>最高值</span>
                 <strong>{maxValue}</strong>
-                <small>ppm</small>
+                <small>{metricInfo.unit}</small>
               </div>
               <div className="stat-card">
                 <span>最低值</span>
                 <strong>{minValue}</strong>
-                <small>ppm</small>
+                <small>{metricInfo.unit}</small>
               </div>
             </div>
 
@@ -345,7 +347,7 @@ function createInterpolatedLakeHeatmap(data, metric) {
   const minLng = Math.min(...lngs) - padding;
   const maxLng = Math.max(...lngs) + padding;
 
-  const values = data.map((d) => d[metric]);
+  const values = data.map((d) => d[metric]).filter((v) => typeof v === "number");
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
 
@@ -386,14 +388,16 @@ function createInterpolatedLakeHeatmap(data, metric) {
 
   ctx.putImageData(imageData, 0, 0);
 
+  const decimal = METRIC_CONFIG[metric].decimal;
+
   return {
     imageUrl: canvas.toDataURL("image/png"),
     bounds: [
       [minLat, minLng],
       [maxLat, maxLng],
     ],
-    minText: minValue.toFixed(metric === "co2" ? 2 : 4),
-    maxText: maxValue.toFixed(metric === "co2" ? 2 : 4),
+    minText: minValue.toFixed(decimal),
+    maxText: maxValue.toFixed(decimal),
   };
 }
 
