@@ -38,10 +38,17 @@ export function generateSensorData(point) {
   const co2 = 520 + Math.random() * 80;
   const ch4 = 1.98 + Math.random() * 0.04;
 
+  const transparency = 0.1 + Math.random() * 4.9;
+  const chlorophyllA = 2.0 + Math.random() * 7.9;
+  const totalPhosphorus = 5 + Math.random() * 25;
+
   return {
     ...point,
     co2: Number(co2.toFixed(2)),
     ch4: Number(ch4.toFixed(4)),
+    transparency: Number(transparency.toFixed(2)),
+    chlorophyllA: Number(chlorophyllA.toFixed(2)),
+    totalPhosphorus: Number(totalPhosphorus.toFixed(2)),
     timestamp: new Date().toLocaleString("zh-TW", {
       hour12: false,
     }),

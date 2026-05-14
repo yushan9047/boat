@@ -203,12 +203,8 @@ export default function App() {
                     fillOpacity: 1,
                   }}
                   eventHandlers={{
-                    mouseover: (e) => {
-                      e.target.openPopup();
-                    },
-                    mouseout: (e) => {
-                      e.target.closePopup();
-                    },
+                    mouseover: (e) => e.target.openPopup(),
+                    mouseout: (e) => e.target.closePopup(),
                   }}
                 >
                   <Tooltip permanent direction="top" offset={[0, -6]} opacity={1}>
@@ -218,14 +214,24 @@ export default function App() {
                   </Tooltip>
 
                   <Popup closeButton={false}>
-                    <div style={{ fontSize: "14px", lineHeight: "1.7" }}>
-                      <strong>{point.point_id}</strong>
-                      <br />
-                      CO₂：{point.co2} ppm
-                      <br />
-                      CH₄：{point.ch4} ppm
-                      <br />
-                      時間：{point.timestamp.split(" ")[1]}
+                    <div style={{ fontSize: "14px", lineHeight: "1.9", minWidth: "220px" }}>
+                      <strong style={{ fontSize: "16px", color: "#1f4f46" }}>
+                        {point.point_id} 監測資料
+                      </strong>
+
+                      <hr style={{ border: "none", borderTop: "1px solid #d8e7e2", margin: "10px 0" }} />
+
+                      <div>CO₂：{point.co2} ppm</div>
+                      <div>CH₄：{point.ch4} ppm</div>
+                      <div>透明度：{point.transparency} m</div>
+                      <div>葉綠素 a：{point.chlorophyllA} μg/L</div>
+                      <div>總磷：{point.totalPhosphorus} μg/L</div>
+
+                      <hr style={{ border: "none", borderTop: "1px solid #d8e7e2", margin: "10px 0" }} />
+
+                      <div style={{ color: "#6c7d78", fontSize: "12px" }}>
+                        時間：{point.timestamp.split(" ")[1]}
+                      </div>
                     </div>
                   </Popup>
                 </CircleMarker>
@@ -291,13 +297,16 @@ export default function App() {
                   <th>點位</th>
                   <th>CO₂</th>
                   <th>CH₄</th>
+                  <th>透明度</th>
+                  <th>葉綠素 a</th>
+                  <th>總磷</th>
                   <th>時間</th>
                 </tr>
               </thead>
               <tbody>
                 {displayData.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="empty">
+                    <td colSpan="7" className="empty">
                       等待資料接收中
                     </td>
                   </tr>
@@ -307,6 +316,9 @@ export default function App() {
                       <td>{item.point_id}</td>
                       <td>{item.co2}</td>
                       <td>{item.ch4}</td>
+                      <td>{item.transparency}</td>
+                      <td>{item.chlorophyllA}</td>
+                      <td>{item.totalPhosphorus}</td>
                       <td>{item.timestamp.split(" ")[1]}</td>
                     </tr>
                   ))
