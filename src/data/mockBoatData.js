@@ -4,16 +4,16 @@ export const LAKE_CENTER = {
 };
 
 export const MONITOR_POINTS = [
-  { point_id: "P1", name: "北側", lat: 23.05082, lng: 120.14600 },
-  { point_id: "P2", name: "西北側", lat: 23.05074, lng: 120.14578 },
-  { point_id: "P3", name: "西側", lat: 23.05058, lng: 120.14564 },
-  { point_id: "P4", name: "西南側", lat: 23.05035, lng: 120.14588 },
-  { point_id: "P5", name: "南西側", lat: 23.05008, lng: 120.14618 },
-  { point_id: "P6", name: "南側", lat: 23.04972, lng: 120.14658 },
-  { point_id: "P7", name: "東南側", lat: 23.04960, lng: 120.14698 },
-  { point_id: "P8", name: "東側", lat: 23.04986, lng: 120.14716 },
-  { point_id: "P9", name: "東北側", lat: 23.05018, lng: 120.14698 },
-  { point_id: "P10", name: "北東側", lat: 23.05050, lng: 120.14660 },
+  { point_id: "P1", name: "北側", lat: 23.05074, lng: 120.14602 },
+  { point_id: "P2", name: "西北側", lat: 23.05066, lng: 120.14582 },
+  { point_id: "P3", name: "西側", lat: 23.05048, lng: 120.14574 },
+  { point_id: "P4", name: "西南側", lat: 23.05028, lng: 120.14600},
+  { point_id: "P5", name: "中央偏南", lat: 23.05005, lng: 120.14626},
+  { point_id: "P6", name: "南側", lat: 23.04986, lng: 120.14658},
+  { point_id: "P7", name: "東南側", lat: 23.04966, lng: 120.14692 },
+  { point_id: "P8", name: "東側", lat: 23.04992, lng: 120.14708 },
+  { point_id: "P9", name: "東北側", lat: 23.05022, lng: 120.14688 },
+  { point_id: "P10", name: "中央偏東", lat: 23.05042, lng: 120.14658 },
 ];
 
 export const LAKE_POLYGON = [
@@ -37,7 +37,6 @@ export const LAKE_POLYGON = [
 export function generateSensorData(point) {
   const co2 = 520 + Math.random() * 80;
   const ch4 = 1.98 + Math.random() * 0.04;
-
   const transparency = 0.1 + Math.random() * 4.9;
   const chlorophyllA = 2.0 + Math.random() * 7.9;
   const totalPhosphorus = 5 + Math.random() * 25;
