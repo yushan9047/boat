@@ -6,6 +6,7 @@ import {
   ImageOverlay,
   CircleMarker,
   Tooltip,
+  Popup,
   useMap,
 } from "react-leaflet";
 import {
@@ -105,18 +106,13 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="logo-title-area">
-          <div className="logo-group">
+          <div className="logo-stack">
             <img
               src={`${BASE_URL}NCKU.png`}
-              alt="國立成功大學校徽"
-              className="school-logo big-logo"
+              alt="NCKU"
+              className="school-logo"
             />
-
-            <img
-              src={`${BASE_URL}MOU.png`}
-              alt="水利署 Logo"
-              className="school-logo big-logo"
-            />
+            <img src={`${BASE_URL}MOU.png`} alt="MOU" className="mou-logo" />
           </div>
 
           <div>
@@ -199,12 +195,20 @@ export default function App() {
                 <CircleMarker
                   key={point.point_id}
                   center={[point.lat, point.lng]}
-                  radius={6}
+                  radius={7}
                   pathOptions={{
                     color: "#ffffff",
                     weight: 2,
                     fillColor: "#1f4f46",
                     fillOpacity: 1,
+                  }}
+                  eventHandlers={{
+                    mouseover: (e) => {
+                      e.target.openPopup();
+                    },
+                    mouseout: (e) => {
+                      e.target.closePopup();
+                    },
                   }}
                 >
                   <Tooltip permanent direction="top" offset={[0, -6]} opacity={1}>
@@ -212,6 +216,18 @@ export default function App() {
                       {point.point_id}
                     </span>
                   </Tooltip>
+
+                  <Popup closeButton={false}>
+                    <div style={{ fontSize: "14px", lineHeight: "1.7" }}>
+                      <strong>{point.point_id}</strong>
+                      <br />
+                      CO₂：{point.co2} ppm
+                      <br />
+                      CH₄：{point.ch4} ppm
+                      <br />
+                      時間：{point.timestamp.split(" ")[1]}
+                    </div>
+                  </Popup>
                 </CircleMarker>
               ))}
             </MapContainer>
@@ -304,7 +320,6 @@ export default function App() {
   );
 }
 
-/* ===== heatmap（原樣保留） ===== */
 function createInterpolatedLakeHeatmap(data, metric) {
   const width = 720;
   const height = 720;
