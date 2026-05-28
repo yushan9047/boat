@@ -160,8 +160,31 @@ export default function App() {
       <header className="header">
         <div className="logo-title-area">
           <div className="logo-stack">
-            <img src={`${BASE_URL}NCKU.png`} alt="NCKU" className="school-logo" />
-            <img src={`${BASE_URL}MOU.png`} alt="MOU" className="mou-logo" />
+            <a
+              href="https://web.ncku.edu.tw/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="前往國立成功大學網站"
+            >
+              <img
+                src={`${BASE_URL}NCKU.png`}
+                alt="NCKU"
+                className="school-logo"
+              />
+            </a>
+
+            <a
+              href="https://www.wra.gov.tw/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="前往水利署網站"
+            >
+              <img
+                src={`${BASE_URL}MOU.png`}
+                alt="水利署"
+                className="mou-logo"
+              />
+            </a>
           </div>
 
           <div>
@@ -412,7 +435,10 @@ function createInterpolatedLakeHeatmap(data, metric) {
   const minLng = Math.min(...lngs) - padding;
   const maxLng = Math.max(...lngs) + padding;
 
-  const values = data.map((d) => d[metric]).filter((v) => typeof v === "number");
+  const values = data
+    .map((d) => d[metric])
+    .filter((v) => typeof v === "number");
+
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
 
