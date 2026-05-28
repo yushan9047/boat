@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -15,6 +15,7 @@ import {
   MONITOR_POINTS,
   generateSensorData,
 } from "./data/mockBoatData";
+import { supabase } from "./lib/supabaseClient";
 
 const COLOR_STOPS = [
   [0.0, [49, 130, 189]],
@@ -53,6 +54,40 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [roundNumber, setRoundNumber] = useState(1);
   const [isRunning, setIsRunning] = useState(true);
+  const [saveStatus, setSaveStatus] = useState("尚未寫入資料庫");
+
+  const savedRoundsRef = useRef(new Set());
+
+  async function saveRoundToSupabase(targetRoundNumber, records) {
+    if (savedRoundsRef.current.has(targetRoundNumber)) return;
+
+    savedRoundsRef.current.add(targetRoundNumber);
+    setSaveStatus("正在寫入 Supabase...");
+
+    const payload = records.map((item) => ({
+      round_number: targetRoundNumber,
+      point_id: item.point_id,
+      point_name: item.name,
+      lat: item.lat,
+      lng: item.lng,
+      co2: item.co2,
+      ch4: item.ch4,
+      transparency: item.transparency,
+      chlorophyll_a: item.chlorophyllA,
+      total_phosphorus: item.totalPhosphorus,
+      recorded_at: item.timestamp,
+    }));
+
+    const { error } = await supabase.from("monitoring_records").insert(payload);
+
+    if (error) {
+      console.error("Supabase 寫入失敗：", error);
+      setSaveStatus("Supabase 寫入失敗，請檢查 RLS 或 API Key");
+      return;
+    }
+
+    setSaveStatus(`第 ${targetRoundNumber} 輪已寫入 Supabase，共 ${payload.length} 筆`);
+  }
 
   useEffect(() => {
     if (!isRunning) return;
@@ -66,6 +101,7 @@ export default function App() {
 
         if (updated.length === MONITOR_POINTS.length) {
           setCompletedData(updated);
+          saveRoundToSupabase(roundNumber, updated);
 
           setTimeout(() => {
             setCurrentRound([]);
@@ -84,7 +120,7 @@ export default function App() {
     }, 2000);
 
     return () => clearInterval(timer);
-  }, [currentIndex, isRunning]);
+  }, [currentIndex, isRunning, roundNumber]);
 
   const displayData = completedData.length > 0 ? completedData : currentRound;
 
@@ -94,12 +130,22 @@ export default function App() {
   }, [displayData, metric]);
 
   const metricInfo = METRIC_CONFIG[metric];
-  const values = displayData.map((item) => item[metric]).filter((v) => typeof v === "number");
+  const values = displayData
+    .map((item) => item[metric])
+    .filter((v) => typeof v === "number");
 
-  const minValue = values.length ? Math.min(...values).toFixed(metricInfo.decimal) : "-";
-  const maxValue = values.length ? Math.max(...values).toFixed(metricInfo.decimal) : "-";
+  const minValue = values.length
+    ? Math.min(...values).toFixed(metricInfo.decimal)
+    : "-";
+
+  const maxValue = values.length
+    ? Math.max(...values).toFixed(metricInfo.decimal)
+    : "-";
+
   const avgValue = values.length
-    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(metricInfo.decimal)
+    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(
+        metricInfo.decimal
+      )
     : "-";
 
   const statusText =
@@ -132,6 +178,7 @@ export default function App() {
           <div>
             <p>監測狀態</p>
             <strong>{statusText}</strong>
+            <p style={{ marginTop: "8px", fontSize: "13px" }}>{saveStatus}</p>
           </div>
         </div>
       </header>
@@ -214,12 +261,24 @@ export default function App() {
                   </Tooltip>
 
                   <Popup closeButton={false}>
-                    <div style={{ fontSize: "14px", lineHeight: "1.9", minWidth: "220px" }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        lineHeight: "1.9",
+                        minWidth: "220px",
+                      }}
+                    >
                       <strong style={{ fontSize: "16px", color: "#1f4f46" }}>
                         {point.point_id} 監測資料
                       </strong>
 
-                      <hr style={{ border: "none", borderTop: "1px solid #d8e7e2", margin: "10px 0" }} />
+                      <hr
+                        style={{
+                          border: "none",
+                          borderTop: "1px solid #d8e7e2",
+                          margin: "10px 0",
+                        }}
+                      />
 
                       <div>CO₂：{point.co2} ppm</div>
                       <div>CH₄：{point.ch4} ppm</div>
@@ -227,7 +286,13 @@ export default function App() {
                       <div>葉綠素 a：{point.chlorophyllA} μg/L</div>
                       <div>總磷：{point.totalPhosphorus} μg/L</div>
 
-                      <hr style={{ border: "none", borderTop: "1px solid #d8e7e2", margin: "10px 0" }} />
+                      <hr
+                        style={{
+                          border: "none",
+                          borderTop: "1px solid #d8e7e2",
+                          margin: "10px 0",
+                        }}
+                      />
 
                       <div style={{ color: "#6c7d78", fontSize: "12px" }}>
                         時間：{point.timestamp.split(" ")[1]}
