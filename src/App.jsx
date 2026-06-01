@@ -26,11 +26,11 @@ const COLOR_STOPS = [
 ];
 
 const METRIC_CONFIG = {
-  co2: { label: "CO₂", unit: "ppm", decimal: 2 },
-  ch4: { label: "CH₄", unit: "ppm", decimal: 4 },
-  transparency: { label: "透明度", unit: "m", decimal: 2 },
-  chlorophyllA: { label: "葉綠素 a", unit: "μg/L", decimal: 2 },
-  totalPhosphorus: { label: "總磷", unit: "μg/L", decimal: 2 },
+  co2: { label: "CO₂", unit: "ppm", decimal: 2, dbKey: "co2" },
+  ch4: { label: "CH₄", unit: "ppm", decimal: 4, dbKey: "ch4" },
+  transparency: { label: "透明度", unit: "m", decimal: 2, dbKey: "transparency" },
+  chlorophyllA: { label: "葉綠素 a", unit: "μg/L", decimal: 2, dbKey: "chlorophyll_a" },
+  totalPhosphorus: { label: "總磷", unit: "μg/L", decimal: 2, dbKey: "total_phosphorus" },
 };
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -55,6 +55,14 @@ export default function App() {
   const [roundNumber, setRoundNumber] = useState(1);
   const [isRunning, setIsRunning] = useState(true);
   const [saveStatus, setSaveStatus] = useState("尚未寫入資料庫");
+
+  const [historyStart, setHistoryStart] = useState("");
+  const [historyEnd, setHistoryEnd] = useState("");
+  const [historyPoint, setHistoryPoint] = useState("all");
+  const [historyMetric, setHistoryMetric] = useState("all");
+  const [historyResults, setHistoryResults] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
 
   const savedRoundsRef = useRef(new Set());
 
@@ -87,6 +95,50 @@ export default function App() {
     }
 
     setSaveStatus(`第 ${targetRoundNumber} 輪已寫入 Supabase，共 ${payload.length} 筆`);
+  }
+
+  async function searchHistoryRecords() {
+    setHistoryLoading(true);
+    setHistoryError("");
+
+    let query = supabase
+      .from("monitoring_records")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (historyStart) {
+      query = query.gte("created_at", new Date(historyStart).toISOString());
+    }
+
+    if (historyEnd) {
+      query = query.lte("created_at", new Date(historyEnd).toISOString());
+    }
+
+    if (historyPoint !== "all") {
+      query = query.eq("point_id", historyPoint);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("歷史資料查詢失敗：", error);
+      setHistoryError("查詢失敗，請確認 Supabase RLS 權限或環境變數設定。");
+      setHistoryResults([]);
+    } else {
+      setHistoryResults(data || []);
+    }
+
+    setHistoryLoading(false);
+  }
+
+  function clearHistorySearch() {
+    setHistoryStart("");
+    setHistoryEnd("");
+    setHistoryPoint("all");
+    setHistoryMetric("all");
+    setHistoryResults([]);
+    setHistoryError("");
   }
 
   useEffect(() => {
@@ -130,6 +182,7 @@ export default function App() {
   }, [displayData, metric]);
 
   const metricInfo = METRIC_CONFIG[metric];
+
   const values = displayData
     .map((item) => item[metric])
     .filter((v) => typeof v === "number");
@@ -143,9 +196,7 @@ export default function App() {
     : "-";
 
   const avgValue = values.length
-    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(
-        metricInfo.decimal
-      )
+    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(metricInfo.decimal)
     : "-";
 
   const statusText =
@@ -154,6 +205,9 @@ export default function App() {
       : currentRound.length < MONITOR_POINTS.length
       ? `第 ${roundNumber} 輪監測中：已收到 ${currentRound.length}/${MONITOR_POINTS.length} 點`
       : "十點資料已完成，正在更新論文式熱圖";
+
+  const historyMetricConfig =
+    historyMetric === "all" ? null : METRIC_CONFIG[historyMetric];
 
   return (
     <div className="app">
@@ -166,11 +220,7 @@ export default function App() {
               rel="noopener noreferrer"
               aria-label="前往國立成功大學網站"
             >
-              <img
-                src={`${BASE_URL}NCKU.png`}
-                alt="NCKU"
-                className="school-logo"
-              />
+              <img src={`${BASE_URL}NCKU.png`} alt="NCKU" className="school-logo" />
             </a>
 
             <a
@@ -179,11 +229,7 @@ export default function App() {
               rel="noopener noreferrer"
               aria-label="前往水利署網站"
             >
-              <img
-                src={`${BASE_URL}MOU.png`}
-                alt="水利署"
-                className="mou-logo"
-              />
+              <img src={`${BASE_URL}MOU.png`} alt="水利署" className="mou-logo" />
             </a>
           </div>
 
@@ -284,24 +330,12 @@ export default function App() {
                   </Tooltip>
 
                   <Popup closeButton={false}>
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        lineHeight: "1.9",
-                        minWidth: "220px",
-                      }}
-                    >
+                    <div style={{ fontSize: "14px", lineHeight: "1.9", minWidth: "220px" }}>
                       <strong style={{ fontSize: "16px", color: "#1f4f46" }}>
                         {point.point_id} 監測資料
                       </strong>
 
-                      <hr
-                        style={{
-                          border: "none",
-                          borderTop: "1px solid #d8e7e2",
-                          margin: "10px 0",
-                        }}
-                      />
+                      <hr style={{ border: "none", borderTop: "1px solid #d8e7e2", margin: "10px 0" }} />
 
                       <div>CO₂：{point.co2} ppm</div>
                       <div>CH₄：{point.ch4} ppm</div>
@@ -309,13 +343,7 @@ export default function App() {
                       <div>葉綠素 a：{point.chlorophyllA} μg/L</div>
                       <div>總磷：{point.totalPhosphorus} μg/L</div>
 
-                      <hr
-                        style={{
-                          border: "none",
-                          borderTop: "1px solid #d8e7e2",
-                          margin: "10px 0",
-                        }}
-                      />
+                      <hr style={{ border: "none", borderTop: "1px solid #d8e7e2", margin: "10px 0" }} />
 
                       <div style={{ color: "#6c7d78", fontSize: "12px" }}>
                         時間：{point.timestamp.split(" ")[1]}
@@ -418,6 +446,131 @@ export default function App() {
           </section>
         </aside>
       </main>
+
+      <section className="panel history-panel">
+        <div className="history-header">
+          <div>
+            <h2>歷史資料查詢</h2>
+            <p>可依照日期時間、點位與監測項目搜尋 Supabase 資料庫紀錄。</p>
+          </div>
+        </div>
+
+        <div className="history-filters">
+          <label>
+            起始時間
+            <input
+              type="datetime-local"
+              value={historyStart}
+              onChange={(e) => setHistoryStart(e.target.value)}
+            />
+          </label>
+
+          <label>
+            結束時間
+            <input
+              type="datetime-local"
+              value={historyEnd}
+              onChange={(e) => setHistoryEnd(e.target.value)}
+            />
+          </label>
+
+          <label>
+            點位
+            <select value={historyPoint} onChange={(e) => setHistoryPoint(e.target.value)}>
+              <option value="all">全部點位</option>
+              {MONITOR_POINTS.map((point) => (
+                <option key={point.point_id} value={point.point_id}>
+                  {point.point_id}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            監測項目
+            <select value={historyMetric} onChange={(e) => setHistoryMetric(e.target.value)}>
+              <option value="all">全部項目</option>
+              {Object.entries(METRIC_CONFIG).map(([key, item]) => (
+                <option key={key} value={key}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="history-actions">
+            <button onClick={searchHistoryRecords} disabled={historyLoading}>
+              {historyLoading ? "查詢中..." : "查詢資料"}
+            </button>
+            <button className="secondary-button" onClick={clearHistorySearch}>
+              清除
+            </button>
+          </div>
+        </div>
+
+        {historyError && <p className="history-error">{historyError}</p>}
+
+        <div className="history-result-info">
+          查詢結果：{historyResults.length} 筆
+        </div>
+
+        <div className="history-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>建立時間</th>
+                <th>輪次</th>
+                <th>點位</th>
+                {historyMetric === "all" ? (
+                  <>
+                    <th>CO₂</th>
+                    <th>CH₄</th>
+                    <th>透明度</th>
+                    <th>葉綠素 a</th>
+                    <th>總磷</th>
+                  </>
+                ) : (
+                  <th>
+                    {historyMetricConfig.label} ({historyMetricConfig.unit})
+                  </th>
+                )}
+              </tr>
+            </thead>
+
+            <tbody>
+              {historyResults.length === 0 ? (
+                <tr>
+                  <td colSpan={historyMetric === "all" ? 8 : 4} className="empty">
+                    尚無查詢資料
+                  </td>
+                </tr>
+              ) : (
+                historyResults.map((row) => (
+                  <tr key={row.id}>
+                    <td>{formatDateTime(row.created_at)}</td>
+                    <td>{row.round_number}</td>
+                    <td>{row.point_id}</td>
+
+                    {historyMetric === "all" ? (
+                      <>
+                        <td>{formatNumber(row.co2, 2)}</td>
+                        <td>{formatNumber(row.ch4, 4)}</td>
+                        <td>{formatNumber(row.transparency, 2)}</td>
+                        <td>{formatNumber(row.chlorophyll_a, 2)}</td>
+                        <td>{formatNumber(row.total_phosphorus, 2)}</td>
+                      </>
+                    ) : (
+                      <td>
+                        {formatNumber(row[historyMetricConfig.dbKey], historyMetricConfig.decimal)}
+                      </td>
+                    )}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
@@ -435,10 +588,7 @@ function createInterpolatedLakeHeatmap(data, metric) {
   const minLng = Math.min(...lngs) - padding;
   const maxLng = Math.max(...lngs) + padding;
 
-  const values = data
-    .map((d) => d[metric])
-    .filter((v) => typeof v === "number");
-
+  const values = data.map((d) => d[metric]).filter((v) => typeof v === "number");
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
 
@@ -547,4 +697,16 @@ function getInterpolatedColor(value) {
   }
 
   return COLOR_STOPS[COLOR_STOPS.length - 1][1];
+}
+
+function formatNumber(value, decimal = 2) {
+  if (value === null || value === undefined) return "-";
+  return Number(value).toFixed(decimal);
+}
+
+function formatDateTime(value) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString("zh-TW", {
+    hour12: false,
+  });
 }
