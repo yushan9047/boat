@@ -28,9 +28,30 @@ const COLOR_STOPS = [
 const METRIC_CONFIG = {
   co2: { label: "CO₂", unit: "ppm", decimal: 2, dbKey: "co2" },
   ch4: { label: "CH₄", unit: "ppm", decimal: 4, dbKey: "ch4" },
-  transparency: { label: "透明度", unit: "m", decimal: 2, dbKey: "transparency" },
-  chlorophyllA: { label: "葉綠素 a", unit: "μg/L", decimal: 2, dbKey: "chlorophyll_a" },
-  totalPhosphorus: { label: "總磷", unit: "μg/L", decimal: 2, dbKey: "total_phosphorus" },
+  transparency: {
+    label: "透明度",
+    unit: "m",
+    decimal: 2,
+    dbKey: "transparency",
+  },
+  chlorophyllA: {
+    label: "葉綠素 a",
+    unit: "μg/L",
+    decimal: 2,
+    dbKey: "chlorophyll_a",
+  },
+  totalPhosphorus: {
+    label: "總磷",
+    unit: "μg/L",
+    decimal: 2,
+    dbKey: "total_phosphorus",
+  },
+  turbidity: {
+    label: "濁度",
+    unit: "NTU",
+    decimal: 2,
+    dbKey: "turbidity",
+  },
 };
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -83,6 +104,7 @@ export default function App() {
       transparency: item.transparency,
       chlorophyll_a: item.chlorophyllA,
       total_phosphorus: item.totalPhosphorus,
+      turbidity: item.turbidity,
       recorded_at: item.timestamp,
     }));
 
@@ -94,7 +116,9 @@ export default function App() {
       return;
     }
 
-    setSaveStatus(`第 ${targetRoundNumber} 輪已寫入 Supabase，共 ${payload.length} 筆`);
+    setSaveStatus(
+      `第 ${targetRoundNumber} 輪已寫入 Supabase，共 ${payload.length} 筆`
+    );
   }
 
   async function searchHistoryRecords() {
@@ -196,7 +220,9 @@ export default function App() {
     : "-";
 
   const avgValue = values.length
-    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(metricInfo.decimal)
+    ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(
+        metricInfo.decimal
+      )
     : "-";
 
   const statusText =
@@ -220,7 +246,11 @@ export default function App() {
               rel="noopener noreferrer"
               aria-label="前往國立成功大學網站"
             >
-              <img src={`${BASE_URL}NCKU.png`} alt="NCKU" className="school-logo" />
+              <img
+                src={`${BASE_URL}NCKU.png`}
+                alt="NCKU"
+                className="school-logo"
+              />
             </a>
 
             <a
@@ -229,7 +259,11 @@ export default function App() {
               rel="noopener noreferrer"
               aria-label="前往水利署網站"
             >
-              <img src={`${BASE_URL}MOU.png`} alt="水利署" className="mou-logo" />
+              <img
+                src={`${BASE_URL}MOU.png`}
+                alt="水利署"
+                className="mou-logo"
+              />
             </a>
           </div>
 
@@ -323,27 +357,51 @@ export default function App() {
                     mouseout: (e) => e.target.closePopup(),
                   }}
                 >
-                  <Tooltip permanent direction="top" offset={[0, -6]} opacity={1}>
+                  <Tooltip
+                    permanent
+                    direction="top"
+                    offset={[0, -6]}
+                    opacity={1}
+                  >
                     <span style={{ fontSize: "12px", fontWeight: "bold" }}>
                       {point.point_id}
                     </span>
                   </Tooltip>
 
                   <Popup closeButton={false}>
-                    <div style={{ fontSize: "14px", lineHeight: "1.9", minWidth: "220px" }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        lineHeight: "1.9",
+                        minWidth: "220px",
+                      }}
+                    >
                       <strong style={{ fontSize: "16px", color: "#1f4f46" }}>
                         {point.point_id} 監測資料
                       </strong>
 
-                      <hr style={{ border: "none", borderTop: "1px solid #d8e7e2", margin: "10px 0" }} />
+                      <hr
+                        style={{
+                          border: "none",
+                          borderTop: "1px solid #d8e7e2",
+                          margin: "10px 0",
+                        }}
+                      />
 
                       <div>CO₂：{point.co2} ppm</div>
                       <div>CH₄：{point.ch4} ppm</div>
                       <div>透明度：{point.transparency} m</div>
                       <div>葉綠素 a：{point.chlorophyllA} μg/L</div>
                       <div>總磷：{point.totalPhosphorus} μg/L</div>
+                      <div>濁度：{point.turbidity} NTU</div>
 
-                      <hr style={{ border: "none", borderTop: "1px solid #d8e7e2", margin: "10px 0" }} />
+                      <hr
+                        style={{
+                          border: "none",
+                          borderTop: "1px solid #d8e7e2",
+                          margin: "10px 0",
+                        }}
+                      />
 
                       <div style={{ color: "#6c7d78", fontSize: "12px" }}>
                         時間：{point.timestamp.split(" ")[1]}
@@ -418,13 +476,14 @@ export default function App() {
                   <th>透明度</th>
                   <th>葉綠素 a</th>
                   <th>總磷</th>
+                  <th>濁度</th>
                   <th>時間</th>
                 </tr>
               </thead>
               <tbody>
                 {displayData.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="empty">
+                    <td colSpan="8" className="empty">
                       等待資料接收中
                     </td>
                   </tr>
@@ -437,6 +496,7 @@ export default function App() {
                       <td>{item.transparency}</td>
                       <td>{item.chlorophyllA}</td>
                       <td>{item.totalPhosphorus}</td>
+                      <td>{item.turbidity}</td>
                       <td>{item.timestamp.split(" ")[1]}</td>
                     </tr>
                   ))
@@ -476,7 +536,10 @@ export default function App() {
 
           <label>
             點位
-            <select value={historyPoint} onChange={(e) => setHistoryPoint(e.target.value)}>
+            <select
+              value={historyPoint}
+              onChange={(e) => setHistoryPoint(e.target.value)}
+            >
               <option value="all">全部點位</option>
               {MONITOR_POINTS.map((point) => (
                 <option key={point.point_id} value={point.point_id}>
@@ -488,7 +551,10 @@ export default function App() {
 
           <label>
             監測項目
-            <select value={historyMetric} onChange={(e) => setHistoryMetric(e.target.value)}>
+            <select
+              value={historyMetric}
+              onChange={(e) => setHistoryMetric(e.target.value)}
+            >
               <option value="all">全部項目</option>
               {Object.entries(METRIC_CONFIG).map(([key, item]) => (
                 <option key={key} value={key}>
@@ -528,6 +594,7 @@ export default function App() {
                     <th>透明度</th>
                     <th>葉綠素 a</th>
                     <th>總磷</th>
+                    <th>濁度</th>
                   </>
                 ) : (
                   <th>
@@ -540,7 +607,10 @@ export default function App() {
             <tbody>
               {historyResults.length === 0 ? (
                 <tr>
-                  <td colSpan={historyMetric === "all" ? 8 : 4} className="empty">
+                  <td
+                    colSpan={historyMetric === "all" ? 9 : 4}
+                    className="empty"
+                  >
                     尚無查詢資料
                   </td>
                 </tr>
@@ -558,10 +628,14 @@ export default function App() {
                         <td>{formatNumber(row.transparency, 2)}</td>
                         <td>{formatNumber(row.chlorophyll_a, 2)}</td>
                         <td>{formatNumber(row.total_phosphorus, 2)}</td>
+                        <td>{formatNumber(row.turbidity, 2)}</td>
                       </>
                     ) : (
                       <td>
-                        {formatNumber(row[historyMetricConfig.dbKey], historyMetricConfig.decimal)}
+                        {formatNumber(
+                          row[historyMetricConfig.dbKey],
+                          historyMetricConfig.decimal
+                        )}
                       </td>
                     )}
                   </tr>
@@ -588,7 +662,10 @@ function createInterpolatedLakeHeatmap(data, metric) {
   const minLng = Math.min(...lngs) - padding;
   const maxLng = Math.max(...lngs) + padding;
 
-  const values = data.map((d) => d[metric]).filter((v) => typeof v === "number");
+  const values = data
+    .map((d) => d[metric])
+    .filter((v) => typeof v === "number");
+
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
 
