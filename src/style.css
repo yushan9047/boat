@@ -502,3 +502,143 @@ td {
     grid-template-columns: 1fr;
   }
 }
+/* ===== Layout cleanup ===== */
+
+.header {
+  grid-template-columns: 1.9fr 0.9fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.logo-title-area {
+  grid-template-columns: 300px 1fr;
+  gap: 32px;
+}
+
+.logo-stack {
+  gap: 18px;
+}
+
+.school-logo,
+.mou-logo {
+  height: 112px;
+  padding: 18px 24px;
+}
+
+h1 {
+  font-size: 42px;
+  max-width: 720px;
+}
+
+.subtitle {
+  max-width: 700px;
+  line-height: 1.7;
+}
+
+.logo-title-area select {
+  width: 260px;
+  background: #ffffff;
+  border: 1px solid #cfe1dc !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 16px rgba(18, 55, 47, 0.06);
+}
+
+/* 地圖區標題重新排版 */
+.panel-header {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.panel-header h2 {
+  font-size: 26px;
+}
+
+.panel-header p {
+  line-height: 1.5;
+}
+
+/* 監測項目按鈕改成整齊兩列 */
+.metric-group {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #edf5f2;
+  border-radius: 22px;
+  padding: 8px;
+}
+
+.metric-group button {
+  width: 100%;
+  padding: 12px 10px;
+  font-size: 15px;
+  border-radius: 16px;
+  white-space: nowrap;
+}
+
+/* 主內容比例調整 */
+.layout {
+  grid-template-columns: minmax(0, 1.75fr) minmax(360px, 0.85fr);
+  gap: 28px;
+}
+
+/* 右側卡片更整齊 */
+.status-card,
+.stats-panel,
+.table-panel {
+  border-radius: 26px;
+}
+
+.status-card {
+  min-height: 130px;
+}
+
+.stat-card {
+  padding: 24px;
+}
+
+/* 地圖不要被擠壓 */
+.map-wrapper {
+  height: 640px;
+}
+
+/* 表格避免太擠 */
+.table-panel {
+  overflow-x: auto;
+}
+
+.table-panel table {
+  min-width: 760px;
+}
+
+/* 手機與小螢幕 */
+@media (max-width: 1300px) {
+  .header,
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .logo-title-area {
+    grid-template-columns: 260px 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .logo-title-area {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+
+  .map-wrapper {
+    height: 520px;
+  }
+}
