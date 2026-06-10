@@ -12,7 +12,7 @@ import { LAKE3 } from "./lake3";
 export const LAKES = [
   {
     id: "ncku",
-    name: "成功大學湖",
+    name: "成功大學湖區",
     center: LAKE_CENTER,
     polygon: LAKE_POLYGON,
     points: MONITOR_POINTS,
@@ -20,20 +20,20 @@ export const LAKES = [
   },
 
   {
-    id: "renyitan",
-    name: "仁義潭",
     ...RENYITAN_LAKE,
+    id: "renyitan",
+    name: "仁義潭水庫",
   },
 
   {
-    id: "lake2",
-    name: "湖區二",
     ...LAKE2,
+    id: "fengshan",
+    name: "鳳山水庫",
   },
 
   {
-    id: "lake3",
-    name: "A-F 六湖區",
     ...LAKE3,
+    id: "niaozuitan",
+    name: "鳥嘴潭人工湖區",
   },
 ];

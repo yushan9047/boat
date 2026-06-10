@@ -1,6 +1,6 @@
 export const LAKE3 = {
-  id: "lake3",
-  name: "第三監測區",
+  id: "niaozuitan",
+  name: "鳥嘴潭人工湖區",
   center: {
     lat: 24.00372222181321,
     lng: 120.719751086515,
@@ -113,5 +113,31 @@ export const LAKE3 = {
         [23.9983299188483, 120.740566836268],
       ],
     },
+  ],
+
+  points: [
+    { point_id: "A1", name: "A 區監測點 1", lat: 24.00525, lng: 120.71305 },
+    { point_id: "A2", name: "A 區監測點 2", lat: 24.00465, lng: 120.71235 },
+    { point_id: "A3", name: "A 區監測點 3", lat: 24.00365, lng: 120.71410 },
+
+    { point_id: "B1", name: "B 區監測點 1", lat: 24.00420, lng: 120.71625 },
+    { point_id: "B2", name: "B 區監測點 2", lat: 24.00210, lng: 120.71660 },
+    { point_id: "B3", name: "B 區監測點 3", lat: 24.00100, lng: 120.71920 },
+
+    { point_id: "C1", name: "C 區監測點 1", lat: 24.00490, lng: 120.72200 },
+    { point_id: "C2", name: "C 區監測點 2", lat: 24.00210, lng: 120.72380 },
+    { point_id: "C3", name: "C 區監測點 3", lat: 24.00440, lng: 120.72580 },
+
+    { point_id: "D1", name: "D 區監測點 1", lat: 24.00330, lng: 120.72830 },
+    { point_id: "D2", name: "D 區監測點 2", lat: 24.00125, lng: 120.72820 },
+    { point_id: "D3", name: "D 區監測點 3", lat: 24.00120, lng: 120.73180 },
+
+    { point_id: "E1", name: "E 區監測點 1", lat: 24.00120, lng: 120.73480 },
+    { point_id: "E2", name: "E 區監測點 2", lat: 23.99960, lng: 120.73690 },
+    { point_id: "E3", name: "E 區監測點 3", lat: 23.99820, lng: 120.73910 },
+
+    { point_id: "F1", name: "F 區監測點 1", lat: 23.99755, lng: 120.74040 },
+    { point_id: "F2", name: "F 區監測點 2", lat: 23.99635, lng: 120.74160 },
+    { point_id: "F3", name: "F 區監測點 3", lat: 23.99565, lng: 120.74330 },
   ],
 };
