@@ -191,7 +191,7 @@ h1 {
   grid-template-columns: 1fr;
   gap: 18px;
   align-items: start;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .panel-header h2,
@@ -835,223 +835,431 @@ tbody tr:hover {
 }
 
 /* ===== 兩層式指標選單 ===== */
+
 .metric-selector-section {
-  padding: 0 22px 20px;
+  width: 100%;
+  margin: 2px 0 22px;
+  padding: 0;
 }
 
 .metric-selector-heading {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 18px;
+  margin-bottom: 14px;
 }
 
 .metric-selector-heading h3 {
   margin: 0;
-  color: #153d35;
+  color: #163f36;
   font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
 }
 
 .metric-selector-heading span {
-  color: #6c7d78;
+  color: #73857f;
   font-size: 13px;
+  line-height: 1.5;
+  font-weight: 650;
 }
 
-/* 第一層：固定三大分類 */
-.metric-level-one {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+/* 第一層：三大分類 */
+.metric-level-one,
+.metric-selector-grid {
+  width: 100%;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
 }
 
-.metric-level-one-item {
+.metric-level-one-item,
+.metric-category-card {
   position: relative;
-  display: flex;
+  display: flex !important;
   align-items: stretch;
   min-width: 0;
+  min-height: 76px;
   overflow: hidden;
-  border: 1px solid #d6e6e1;
-  border-radius: 14px;
-  background: #f8fbfa;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  border: 1px solid #d4e3de !important;
+  border-radius: 18px !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f6faf8 100%) !important;
+  box-shadow:
+    0 6px 18px rgba(19, 63, 54, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 
-.metric-level-one-item:hover {
-  transform: translateY(-1px);
-  border-color: #8db9ad;
+.metric-level-one-item:hover,
+.metric-category-card:hover {
+  transform: translateY(-2px);
+  border-color: #93bdb2 !important;
+  box-shadow: 0 12px 28px rgba(25, 91, 75, 0.11);
 }
 
-.metric-level-one-item.selected {
-  border-color: #78aa9e;
+.metric-level-one-item.selected,
+.metric-category-card.selected {
+  border-color: #79aa9e !important;
 }
 
-.metric-level-one-item.open {
-  border-color: #236c5a;
-  box-shadow: 0 8px 24px rgba(26, 91, 75, 0.14);
+.metric-level-one-item.open,
+.metric-category-card.open {
+  border-color: #174f43 !important;
+  background: linear-gradient(135deg, #174f43 0%, #236d5c 100%) !important;
+  box-shadow: 0 14px 30px rgba(20, 78, 65, 0.22);
 }
 
-.metric-level-one-button {
+.metric-level-one-button,
+.metric-category-button {
+  appearance: none;
+  -webkit-appearance: none;
   flex: 1;
   min-width: 0;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: grid !important;
+  grid-template-columns: 44px minmax(0, 1fr) 20px;
   align-items: center;
-  gap: 10px;
-  min-height: 58px;
-  padding: 12px 14px;
-  border: 0;
-  background: transparent;
-  color: #173f36;
+  gap: 13px;
+  width: 100%;
+  min-height: 74px;
+  margin: 0 !important;
+  padding: 14px 15px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: none;
+  background: transparent !important;
+  color: #173f36 !important;
+  box-shadow: none !important;
+  font-size: 15px;
   font-weight: 800;
-  cursor: pointer;
   text-align: left;
+  cursor: pointer;
 }
 
-.metric-level-one-item.open .metric-level-one-button {
-  background: linear-gradient(135deg, #e9f5f1, #f9fcfb);
+.metric-level-one-button:focus-visible,
+.metric-category-button:focus-visible,
+.ctsi-inline-info-button:focus-visible,
+.metric-level-two-options button:focus-visible,
+.metric-submenu button:focus-visible {
+  outline: 3px solid rgba(58, 140, 119, 0.24);
+  outline-offset: -3px;
+}
+
+.metric-level-one-item.open .metric-level-one-button,
+.metric-category-card.open .metric-category-button {
+  color: #ffffff !important;
 }
 
 .metric-category-icon {
-  width: 30px;
-  height: 30px;
+  width: 42px;
+  height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 30px;
-  border-radius: 50%;
-  background: #dff0ea;
-  color: #1f765f;
-  font-size: 18px;
-  line-height: 1;
+  flex: 0 0 42px;
+  border-radius: 14px;
+  background: #e3f2ed;
+  color: #24715e;
+  box-shadow: inset 0 0 0 1px rgba(43, 119, 99, 0.08);
+}
+
+.metric-category-icon svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .metric-category-icon.ctsi {
-  background: #dff4ef;
-  color: #338875;
+  background: #e3f5f0;
+  color: #3f947f;
 }
 
 .metric-category-icon.water {
-  background: #e3f0fb;
-  color: #2f81bd;
-  font-size: 12px;
+  background: #e8f3fb;
+  color: #3988bd;
+}
+
+.metric-level-one-item.open .metric-category-icon,
+.metric-category-card.open .metric-category-icon {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13);
+}
+
+.metric-category-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .metric-category-label {
+  display: block;
   overflow: hidden;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.metric-category-copy small {
+  overflow: hidden;
+  color: #758780;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-level-one-item.open .metric-category-copy small,
+.metric-category-card.open .metric-category-copy small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .metric-category-arrow {
-  color: #55736b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #59746c;
   font-size: 18px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.metric-level-one-item.open .metric-category-arrow,
+.metric-category-card.open .metric-category-arrow {
+  color: #ffffff;
 }
 
 .ctsi-inline-info-button {
-  width: 44px;
-  flex: 0 0 44px;
-  border: 0;
-  border-left: 1px solid #d6e6e1;
-  background: #f6fbf9;
-  color: #317c6a;
-  font-size: 17px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 45px;
+  flex: 0 0 45px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-left: 1px solid #d8e5e1 !important;
+  border-radius: 0 !important;
+  background: rgba(246, 251, 249, 0.92) !important;
+  color: #287360 !important;
+  box-shadow: none !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
   font-weight: 900;
   cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .ctsi-inline-info-button:hover {
-  background: #e4f4ef;
+  background: #e3f2ed !important;
+  color: #174f43 !important;
 }
 
-/* 第二層：與第一層分開，點擊分類後才顯示 */
-.metric-level-two {
-  margin-top: 12px;
-  padding: 14px;
-  border: 1px solid #d6e6e1;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 12px 30px rgba(27, 73, 62, 0.08);
-  animation: metricSecondLevelIn 0.18s ease-out;
+.metric-level-one-item.open .ctsi-inline-info-button,
+.metric-category-card.open .ctsi-inline-info-button {
+  border-left-color: rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* 第二層：點選分類後才展開 */
+.metric-level-two,
+.metric-submenu {
+  position: relative;
+  width: 100%;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid #d4e4df !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(135deg, rgba(242, 249, 246, 0.96), rgba(255, 255, 255, 0.98)) !important;
+  box-shadow:
+    0 14px 34px rgba(23, 74, 62, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  animation: metricSecondLevelIn 0.2s ease-out;
+}
+
+.metric-level-two::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  width: 15px;
+  height: 15px;
+  border-top: 1px solid #d4e4df;
+  border-left: 1px solid #d4e4df;
+  background: #f5faf8;
+  transform: rotate(45deg);
+}
+
+.metric-level-two-carbon::before {
+  left: calc(16.666% - 7px);
+}
+
+.metric-level-two-ctsi::before {
+  left: calc(50% - 7px);
+}
+
+.metric-level-two-water::before {
+  left: calc(83.333% - 7px);
 }
 
 .metric-level-two-carbon {
-  border-top: 3px solid #377e6d;
+  border-top: 3px solid #287360 !important;
 }
 
 .metric-level-two-ctsi {
-  border-top: 3px solid #65a996;
+  border-top: 3px solid #56a18d !important;
 }
 
 .metric-level-two-water {
-  border-top: 3px solid #6aa6cf;
+  border-top: 3px solid #5b9cca !important;
 }
 
 .metric-level-two-title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
+.metric-level-two-title > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
 }
 
 .metric-level-two-title span {
   color: #174d40;
   font-size: 15px;
-  font-weight: 800;
+  line-height: 1.3;
+  font-weight: 900;
 }
 
 .metric-level-two-title small {
-  color: #7a8c87;
+  color: #7a8d86;
   font-size: 12px;
+  line-height: 1.4;
+  font-weight: 650;
 }
 
-.metric-level-two-options {
+.metric-level-two-title strong {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #e4f2ed;
+  color: #286b5b;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.metric-level-two-options,
+.metric-submenu {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
 }
 
-.metric-level-two-options button {
-  display: flex;
+.metric-level-two-options button,
+.metric-submenu button {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  min-height: 46px;
-  padding: 11px 13px;
-  border: 1px solid #dce8e4;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #244d43;
-  cursor: pointer;
-  font-weight: 700;
+  min-height: 48px;
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid #d9e6e2 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: #274f45 !important;
+  box-shadow: 0 4px 12px rgba(20, 72, 60, 0.035) !important;
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 800;
   text-align: left;
-  transition: 0.18s ease;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
-.metric-level-two-options button small {
+.metric-level-two-options button small,
+.metric-submenu button small {
   color: #82918d;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .metric-level-two-options button:hover,
-.metric-level-two-options button.active {
-  border-color: #377e6d;
-  background: #eaf5f1;
-  color: #165f4f;
+.metric-submenu button:hover {
+  transform: translateY(-1px);
+  border-color: #83b2a6 !important;
+  background: #f7fbfa !important;
+  box-shadow: 0 8px 18px rgba(29, 91, 75, 0.08) !important;
 }
 
-.metric-level-two-options .metric-level-two-explain {
+.metric-level-two-options button.active,
+.metric-submenu button.active {
+  border-color: #174f43 !important;
+  background: linear-gradient(135deg, #174f43, #276f5e) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 20px rgba(23, 79, 67, 0.2) !important;
+}
+
+.metric-level-two-options button.active small,
+.metric-submenu button.active small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.metric-level-two-options .metric-level-two-explain,
+.metric-submenu .metric-submenu-explain {
   justify-content: center;
-  border-style: dashed;
-  color: #317c6a;
+  border-style: dashed !important;
+  border-color: #8db9ae !important;
+  background: rgba(238, 248, 245, 0.78) !important;
+  color: #266e5d !important;
+}
+
+.metric-level-two-options .metric-level-two-explain:hover,
+.metric-submenu .metric-submenu-explain:hover {
+  background: #e5f3ef !important;
+}
+
+/* 相容前一版 App.jsx 的卡片內第二層 */
+.metric-category-card .metric-submenu {
+  grid-column: 1 / -1;
+  margin: 0 12px 12px;
 }
 
 @keyframes metricSecondLevelIn {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-7px);
   }
 
   to {
@@ -1385,14 +1593,6 @@ tbody tr:hover {
 }
 
 @media (max-width: 980px) {
-  .metric-level-one {
-    grid-template-columns: 1fr;
-  }
-
-  .metric-level-two-options {
-    grid-template-columns: 1fr;
-  }
-
   .ctsi-modal-layout {
     grid-template-columns: 1fr;
   }
@@ -1407,6 +1607,41 @@ tbody tr:hover {
   .ctsi-intro-grid,
   .ctsi-formula-grid,
   .ctsi-source-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 760px) {
+  .metric-selector-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .metric-level-one,
+  .metric-selector-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .metric-level-two::before {
+    display: none;
+  }
+
+  .metric-level-two-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .metric-level-two-title > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .metric-level-two-options,
+  .metric-submenu {
     grid-template-columns: 1fr;
   }
 }

@@ -53,25 +53,54 @@ const METRIC_GROUPS = [
   {
     id: "carbon",
     label: "碳排通量",
-    icon: "◒",
+    caption: "碳排相關監測指標",
     metrics: ["co2", "ch4"],
   },
   {
     id: "ctsi",
-    label: "CTSI 卡爾森指數",
-    icon: "≋",
+    label: "CTSI",
+    caption: "卡爾森優養化指數",
     metrics: ["transparency", "chlorophyllA", "totalPhosphorus"],
     hasInfo: true,
   },
   {
     id: "water",
     label: "水質參數",
-    icon: "●",
+    caption: "其他水質監測指標",
     metrics: ["turbidity"],
   },
 ];
 
 const BASE_URL = import.meta.env.BASE_URL;
+
+
+function MetricGroupIcon({ type }) {
+  if (type === "carbon") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19.5 4.5C12 4.8 6.7 8.1 5.4 13.3c-.7 2.8.5 5.1 2.6 5.7 2.4.7 4.9-.9 6.5-3.1 2.3-3.1 3.5-6.7 5-11.4Z" />
+        <path d="M5 20c2.7-4.4 6.2-7.4 10.6-9.2" />
+      </svg>
+    );
+  }
+
+  if (type === "ctsi") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 7.5c2.2 0 2.2 1.7 4.4 1.7s2.2-1.7 4.4-1.7 2.2 1.7 4.4 1.7 2.2-1.7 4.8-1.7" />
+        <path d="M3 12c2.2 0 2.2 1.7 4.4 1.7s2.2-1.7 4.4-1.7 2.2 1.7 4.4 1.7 2.2-1.7 4.8-1.7" />
+        <path d="M3 16.5c2.2 0 2.2 1.7 4.4 1.7s2.2-1.7 4.4-1.7 2.2 1.7 4.4 1.7 2.2-1.7 4.8-1.7" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3.2S5.8 10.3 5.8 15a6.2 6.2 0 0 0 12.4 0C18.2 10.3 12 3.2 12 3.2Z" />
+      <path d="M9.2 16.1c.5 1.3 1.5 2 2.8 2.2" />
+    </svg>
+  );
+}
 
 function BoundsFitter({ polygons }) {
   const map = useMap();
@@ -89,7 +118,7 @@ function BoundsFitter({ polygons }) {
 export default function App() {
   const [selectedLakeId, setSelectedLakeId] = useState(LAKES[0]?.id || "ncku");
   const [metric, setMetric] = useState("co2");
-  const [openMetricGroup, setOpenMetricGroup] = useState("carbon");
+  const [openMetricGroup, setOpenMetricGroup] = useState("");
   const [currentRound, setCurrentRound] = useState([]);
   const [completedData, setCompletedData] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -401,10 +430,11 @@ export default function App() {
           <div className="metric-selector-section">
             <div className="metric-selector-heading">
               <h3>指標切換</h3>
-              <span>先選擇分類，再選擇要顯示的監測項目</span>
+              <span>選擇分類後，再從第二層挑選監測項目</span>
             </div>
 
-            <div className="metric-selector-grid">
+            {/* 第一層：固定只顯示三大分類 */}
+            <div className="metric-level-one">
               {METRIC_GROUPS.map((group) => {
                 const isOpen = openMetricGroup === group.id;
                 const isActive = group.metrics.includes(metric);
@@ -412,65 +442,94 @@ export default function App() {
                 return (
                   <div
                     key={group.id}
-                    className={`metric-category-card ${isOpen ? "open" : ""} ${
+                    className={`metric-level-one-item ${isOpen ? "open" : ""} ${
                       isActive ? "selected" : ""
                     }`}
                   >
-                    <div className="metric-category-row">
+                    <button
+                      type="button"
+                      className="metric-level-one-button"
+                      onClick={() =>
+                        setOpenMetricGroup((previousGroup) =>
+                          previousGroup === group.id ? "" : group.id
+                        )
+                      }
+                      aria-expanded={isOpen}
+                      aria-controls={`metric-submenu-${group.id}`}
+                    >
+                      <span className={`metric-category-icon ${group.id}`}>
+                        <MetricGroupIcon type={group.id} />
+                      </span>
+                      <span className="metric-category-copy">
+                        <span className="metric-category-label">{group.label}</span>
+                        <small>{group.caption}</small>
+                      </span>
+                      <span className="metric-category-arrow">{isOpen ? "⌃" : "⌄"}</span>
+                    </button>
+
+                    {group.hasInfo && (
                       <button
                         type="button"
-                        className="metric-category-button"
-                        onClick={() =>
-                          setOpenMetricGroup((prev) => (prev === group.id ? "" : group.id))
-                        }
+                        className="ctsi-inline-info-button"
+                        onClick={() => openCtsiExplanation("formula")}
+                        aria-label="查看 CTSI 計算方法"
+                        title="查看 CTSI 計算方法"
                       >
-                        <span className={`metric-category-icon ${group.id}`}>{group.icon}</span>
-                        <span className="metric-category-label">{group.label}</span>
-                        <span className="metric-category-arrow">{isOpen ? "⌃" : "⌄"}</span>
+                        i
                       </button>
-
-                      {group.hasInfo && (
-                        <button
-                          type="button"
-                          className="ctsi-inline-info-button"
-                          onClick={() => openCtsiExplanation("formula")}
-                          aria-label="查看 CTSI 計算方法"
-                          title="查看 CTSI 計算方法"
-                        >
-                          i
-                        </button>
-                      )}
-                    </div>
-
-                    {isOpen && (
-                      <div className="metric-submenu">
-                        {group.metrics.map((metricKey) => (
-                          <button
-                            key={metricKey}
-                            type="button"
-                            className={metric === metricKey ? "active" : ""}
-                            onClick={() => setMetric(metricKey)}
-                          >
-                            <span>{METRIC_CONFIG[metricKey].label}</span>
-                            <small>{METRIC_CONFIG[metricKey].unit}</small>
-                          </button>
-                        ))}
-
-                        {group.id === "ctsi" && (
-                          <button
-                            type="button"
-                            className="metric-submenu-explain"
-                            onClick={() => openCtsiExplanation("intro")}
-                          >
-                            CTSI 說明
-                          </button>
-                        )}
-                      </div>
                     )}
                   </div>
                 );
               })}
             </div>
+
+            {/* 第二層：只有點擊第一層分類後才會出現 */}
+            {openMetricGroup && (() => {
+              const activeGroup = METRIC_GROUPS.find(
+                (group) => group.id === openMetricGroup
+              );
+
+              if (!activeGroup) return null;
+
+              return (
+                <div
+                  id={`metric-submenu-${activeGroup.id}`}
+                  className={`metric-level-two metric-level-two-${activeGroup.id}`}
+                >
+                  <div className="metric-level-two-title">
+                    <div>
+                      <span>{activeGroup.label}</span>
+                      <small>{activeGroup.caption}</small>
+                    </div>
+                    <strong>目前顯示：{metricInfo.label}</strong>
+                  </div>
+
+                  <div className="metric-level-two-options">
+                    {activeGroup.metrics.map((metricKey) => (
+                      <button
+                        key={metricKey}
+                        type="button"
+                        className={metric === metricKey ? "active" : ""}
+                        onClick={() => setMetric(metricKey)}
+                      >
+                        <span>{METRIC_CONFIG[metricKey].label}</span>
+                        <small>{METRIC_CONFIG[metricKey].unit}</small>
+                      </button>
+                    ))}
+
+                    {activeGroup.id === "ctsi" && (
+                      <button
+                        type="button"
+                        className="metric-level-two-explain"
+                        onClick={() => openCtsiExplanation("intro")}
+                      >
+                        CTSI 說明／計算方法
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="map-wrapper">
