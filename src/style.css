@@ -93,12 +93,13 @@ select {
 
 h1 {
   margin: 0;
-  max-width: 760px;
+  max-width: none;
   color: #12372f;
-  font-size: 46px;
-  line-height: 1.18;
+  font-size: clamp(40px, 3vw, 52px);
+  line-height: 1.12;
   font-weight: 950;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .subtitle {
@@ -766,6 +767,7 @@ tbody tr:hover {
 
   h1 {
     font-size: 36px;
+    white-space: normal;
   }
 
   .subtitle {
