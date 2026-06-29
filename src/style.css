@@ -858,40 +858,47 @@ tbody tr:hover {
   font-size: 13px;
 }
 
-.metric-selector-grid {
+/* 第一層：固定三大分類 */
+.metric-level-one {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
-  align-items: start;
 }
 
-.metric-category-card {
+.metric-level-one-item {
   position: relative;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid #d6e6e1;
   border-radius: 14px;
   background: #f8fbfa;
-  overflow: hidden;
-  transition: 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.metric-category-card.selected {
-  border-color: #4a8d7e;
-  box-shadow: 0 8px 24px rgba(26, 91, 75, 0.1);
+.metric-level-one-item:hover {
+  transform: translateY(-1px);
+  border-color: #8db9ad;
 }
 
-.metric-category-row {
-  display: flex;
-  align-items: stretch;
+.metric-level-one-item.selected {
+  border-color: #78aa9e;
 }
 
-.metric-category-button {
+.metric-level-one-item.open {
+  border-color: #236c5a;
+  box-shadow: 0 8px 24px rgba(26, 91, 75, 0.14);
+}
+
+.metric-level-one-button {
   flex: 1;
   min-width: 0;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 10px;
-  min-height: 56px;
+  min-height: 58px;
   padding: 12px 14px;
   border: 0;
   background: transparent;
@@ -901,8 +908,8 @@ tbody tr:hover {
   text-align: left;
 }
 
-.metric-category-card.selected .metric-category-button {
-  background: linear-gradient(135deg, #eef8f4, #f9fcfb);
+.metric-level-one-item.open .metric-level-one-button {
+  background: linear-gradient(135deg, #e9f5f1, #f9fcfb);
 }
 
 .metric-category-icon {
@@ -911,6 +918,7 @@ tbody tr:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 30px;
   border-radius: 50%;
   background: #dff0ea;
   color: #1f765f;
@@ -942,6 +950,7 @@ tbody tr:hover {
 
 .ctsi-inline-info-button {
   width: 44px;
+  flex: 0 0 44px;
   border: 0;
   border-left: 1px solid #d6e6e1;
   background: #f6fbf9;
@@ -955,21 +964,62 @@ tbody tr:hover {
   background: #e4f4ef;
 }
 
-.metric-submenu {
-  display: grid;
-  gap: 8px;
-  padding: 10px;
-  border-top: 1px solid #e1ece8;
+/* 第二層：與第一層分開，點擊分類後才顯示 */
+.metric-level-two {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #d6e6e1;
+  border-radius: 14px;
   background: #ffffff;
+  box-shadow: 0 12px 30px rgba(27, 73, 62, 0.08);
+  animation: metricSecondLevelIn 0.18s ease-out;
 }
 
-.metric-submenu button {
+.metric-level-two-carbon {
+  border-top: 3px solid #377e6d;
+}
+
+.metric-level-two-ctsi {
+  border-top: 3px solid #65a996;
+}
+
+.metric-level-two-water {
+  border-top: 3px solid #6aa6cf;
+}
+
+.metric-level-two-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.metric-level-two-title span {
+  color: #174d40;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.metric-level-two-title small {
+  color: #7a8c87;
+  font-size: 12px;
+}
+
+.metric-level-two-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-level-two-options button {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding: 11px 12px;
+  min-height: 46px;
+  padding: 11px 13px;
   border: 1px solid #dce8e4;
   border-radius: 10px;
   background: #ffffff;
@@ -977,24 +1027,37 @@ tbody tr:hover {
   cursor: pointer;
   font-weight: 700;
   text-align: left;
+  transition: 0.18s ease;
 }
 
-.metric-submenu button small {
+.metric-level-two-options button small {
   color: #82918d;
   font-weight: 600;
 }
 
-.metric-submenu button:hover,
-.metric-submenu button.active {
+.metric-level-two-options button:hover,
+.metric-level-two-options button.active {
   border-color: #377e6d;
   background: #eaf5f1;
   color: #165f4f;
 }
 
-.metric-submenu .metric-submenu-explain {
+.metric-level-two-options .metric-level-two-explain {
   justify-content: center;
   border-style: dashed;
   color: #317c6a;
+}
+
+@keyframes metricSecondLevelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ===== CTSI 摘要卡 ===== */
@@ -1322,7 +1385,11 @@ tbody tr:hover {
 }
 
 @media (max-width: 980px) {
-  .metric-selector-grid {
+  .metric-level-one {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-level-two-options {
     grid-template-columns: 1fr;
   }
 
