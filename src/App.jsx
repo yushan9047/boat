@@ -1040,20 +1040,28 @@ export default function App() {
                         href="https://wq.moenv.gov.tw/EWQP/zh/Encyclopedia/NounDefinition/Pedia_18.aspx"
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label="開啟環境部水質百科與優養化相關說明"
+                        title="開啟環境部資料來源"
                       >
                         <strong>環境部</strong>
                         <span>水質百科與優養化相關說明</span>
-                        <small>開啟資料來源 ↗</small>
+                        <small>
+                          https://wq.moenv.gov.tw/EWQP/zh/Encyclopedia/NounDefinition/Pedia_18.aspx
+                        </small>
+                        <b>開啟資料來源 ↗</b>
                       </a>
 
                       <a
                         href="https://web.wra.gov.tw/twmo/cp.aspx?n=8657"
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label="開啟水利署水質監測與相關公開資料"
+                        title="開啟水利署資料來源"
                       >
-                        <strong>經濟部水利署</strong>
+                        <strong>水利署</strong>
                         <span>水質監測與相關公開資料</span>
-                        <small>開啟資料來源 ↗</small>
+                        <small>https://web.wra.gov.tw/twmo/cp.aspx?n=8657</small>
+                        <b>開啟資料來源 ↗</b>
                       </a>
                     </div>
                   </section>
