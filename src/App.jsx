@@ -11,6 +11,7 @@ import {
 } from "react-leaflet";
 import { LAKES } from "./data/lakes/lakeConfig";
 import { supabase } from "./lib/supabaseClient";
+import * as XLSX from "xlsx";
 
 const COLOR_STOPS = [
   [0.0, [49, 130, 189]],
@@ -21,8 +22,8 @@ const COLOR_STOPS = [
 ];
 
 const METRIC_CONFIG = {
-  co2: { label: "CO₂", unit: "ppm", decimal: 2, dbKey: "co2" },
-  ch4: { label: "CH₄", unit: "ppm", decimal: 4, dbKey: "ch4" },
+  co2: { label: "CO₂", unit: "ppm", decimal: 1, dbKey: "co2" },
+  ch4: { label: "CH₄", unit: "ppm", decimal: 2, dbKey: "ch4" },
   transparency: {
     label: "透明度",
     unit: "m",
@@ -135,6 +136,7 @@ export default function App() {
   const [historyMetric, setHistoryMetric] = useState("all");
   const [historyResults, setHistoryResults] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyExporting, setHistoryExporting] = useState(false);
   const [historyError, setHistoryError] = useState("");
 
   const savedRoundsRef = useRef(new Set());
@@ -192,7 +194,7 @@ export default function App() {
       ? currentLake.generator(point)
       : generateBasicSensorData(point);
 
-    return attachCtsiValues(rawData);
+    return attachCtsiValues(normalizeSensorPrecision(rawData));
   }
 
   function openCtsiExplanation(tab = "intro") {
@@ -284,6 +286,66 @@ export default function App() {
     setHistoryMetric("all");
     setHistoryResults([]);
     setHistoryError("");
+  }
+
+  function exportHistoryToExcel() {
+    if (historyResults.length === 0 || historyExporting) return;
+
+    setHistoryExporting(true);
+    setHistoryError("");
+
+    try {
+      const exportRows = historyResults.map((row) => {
+        const basicFields = {
+          建立時間: formatDateTime(row.created_at),
+          湖區: row.lake_name || "-",
+          輪次: row.round_number ?? "-",
+          點位: row.point_id || "-",
+        };
+
+        if (historyMetric !== "all") {
+          const selectedMetricInfo = getHistoryMetricInfo(historyMetric);
+
+          return {
+            ...basicFields,
+            [`${selectedMetricInfo.label}${selectedMetricInfo.unit ? ` (${selectedMetricInfo.unit})` : ""}`]:
+              getHistoryMetricNumber(row, historyMetric),
+          };
+        }
+
+        return {
+          ...basicFields,
+          "CO₂ (ppm)": toRoundedNumber(row.co2, 1),
+          "CH₄ (ppm)": toRoundedNumber(row.ch4, 2),
+          "透明度 (m)": toRoundedNumber(row.transparency, 2),
+          "葉綠素 a (μg/L)": toRoundedNumber(row.chlorophyllA, 2),
+          "總磷 (μg/L)": toRoundedNumber(row.totalPhosphorus, 2),
+          "濁度 (NTU)": toRoundedNumber(row.turbidity, 2),
+          CTSI: toRoundedNumber(row.ctsi, 1),
+          優養化判讀: row.ctsi === null || row.ctsi === undefined ? "資料不足" : classifyCtsi(row.ctsi),
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      worksheet["!cols"] = buildHistoryExcelColumnWidths(historyMetric);
+      applyHistoryExcelNumberFormats(worksheet, exportRows.length, historyMetric);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "歷史監測資料");
+
+      const lakeLabel =
+        historyLake === "all"
+          ? "全部湖區"
+          : LAKES.find((lake) => lake.id === historyLake)?.name || "監測區";
+      const fileName = `${sanitizeFileName(lakeLabel)}_歷史監測資料_${formatFileTimestamp(new Date())}.xlsx`;
+
+      XLSX.writeFile(workbook, fileName, { compression: true });
+    } catch (error) {
+      console.error("Excel 匯出失敗：", error);
+      setHistoryError("Excel 匯出失敗，請確認 xlsx 套件是否已安裝。");
+    } finally {
+      setHistoryExporting(false);
+    }
   }
 
   useEffect(() => {
@@ -603,14 +665,14 @@ export default function App() {
                           margin: "10px 0",
                         }}
                       />
-                      <div>CO₂：{point.co2} ppm</div>
-                      <div>CH₄：{point.ch4} ppm</div>
+                      <div>CO₂：{formatNumber(point.co2, 1)} ppm</div>
+                      <div>CH₄：{formatNumber(point.ch4, 2)} ppm</div>
                       <div>透明度：{point.transparency} m</div>
                       <div>葉綠素 a：{point.chlorophyllA} μg/L</div>
                       <div>總磷：{point.totalPhosphorus} μg/L</div>
                       <div>濁度：{point.turbidity} NTU</div>
                       <div>
-                        CTSI：{point.ctsi ?? "資料不足"}
+                        CTSI：{formatNumber(point.ctsi, 1)}
                         {point.ctsi !== null && point.ctsi !== undefined
                           ? `（${classifyCtsi(point.ctsi)}）`
                           : ""}
@@ -678,7 +740,7 @@ export default function App() {
             <div className="ctsi-summary-card">
               <div>
                 <span>本輪平均 CTSI</span>
-                <strong>{averageCtsi === null ? "-" : averageCtsi.toFixed(2)}</strong>
+                <strong>{averageCtsi === null ? "-" : averageCtsi.toFixed(1)}</strong>
               </div>
               <div>
                 <span>優養化判讀</span>
@@ -722,13 +784,13 @@ export default function App() {
                   displayData.map((item) => (
                     <tr key={item.point_id}>
                       <td>{item.point_id}</td>
-                      <td>{item.co2}</td>
-                      <td>{item.ch4}</td>
+                      <td>{formatNumber(item.co2, 1)}</td>
+                      <td>{formatNumber(item.ch4, 2)}</td>
                       <td>{item.transparency}</td>
                       <td>{item.chlorophyllA}</td>
                       <td>{item.totalPhosphorus}</td>
                       <td>{item.turbidity}</td>
-                      <td>{item.ctsi ?? "資料不足"}</td>
+                      <td>{formatNumber(item.ctsi, 1)}</td>
                       <td>{item.timestamp?.split(" ")[1] || "-"}</td>
                     </tr>
                   ))
@@ -823,6 +885,15 @@ export default function App() {
             <button onClick={searchHistoryRecords} disabled={historyLoading}>
               {historyLoading ? "查詢中..." : "查詢資料"}
             </button>
+            <button
+              type="button"
+              className="export-button"
+              onClick={exportHistoryToExcel}
+              disabled={historyResults.length === 0 || historyExporting}
+              title={historyResults.length === 0 ? "請先查詢歷史資料" : "將目前查詢結果下載為 Excel"}
+            >
+              {historyExporting ? "匯出中..." : "匯出 Excel"}
+            </button>
             <button className="secondary-button" onClick={clearHistorySearch}>
               清除
             </button>
@@ -876,13 +947,13 @@ export default function App() {
                     <td>{row.point_id}</td>
                     {historyMetric === "all" ? (
                       <>
-                        <td>{formatNumber(row.co2, 2)}</td>
-                        <td>{formatNumber(row.ch4, 4)}</td>
+                        <td>{formatNumber(row.co2, 1)}</td>
+                        <td>{formatNumber(row.ch4, 2)}</td>
                         <td>{formatNumber(row.transparency, 2)}</td>
                         <td>{formatNumber(row.chlorophyllA, 2)}</td>
                         <td>{formatNumber(row.totalPhosphorus, 2)}</td>
                         <td>{formatNumber(row.turbidity, 2)}</td>
-                        <td>{formatNumber(row.ctsi, 2)}</td>
+                        <td>{formatNumber(row.ctsi, 1)}</td>
                       </>
                     ) : (
                       <td>{formatHistoryMetricValue(row, historyMetric)}</td>
@@ -1201,7 +1272,7 @@ function calculateCtsiValues(transparency, chlorophyllA, totalPhosphorus) {
     tsiSd: Number(tsiSd.toFixed(2)),
     tsiChla: Number(tsiChla.toFixed(2)),
     tsiTp: Number(tsiTp.toFixed(2)),
-    ctsi: Number(ctsi.toFixed(2)),
+    ctsi: Number(ctsi.toFixed(1)),
   };
 }
 
@@ -1239,14 +1310,14 @@ function classifyCtsi(value) {
 
 function getHistoryMetricInfo(metric) {
   if (metric === "ctsi") {
-    return { label: "CTSI", unit: "", decimal: 2 };
+    return { label: "CTSI", unit: "", decimal: 1 };
   }
 
   return METRIC_CONFIG[metric] || { label: "監測值", unit: "", decimal: 2 };
 }
 
 function formatHistoryMetricValue(row, metric) {
-  if (metric === "ctsi") return formatNumber(row.ctsi, 2);
+  if (metric === "ctsi") return formatNumber(row.ctsi, 1);
 
   const config = METRIC_CONFIG[metric];
   if (!config) return "-";
@@ -1301,6 +1372,115 @@ function getInterpolatedColor(value) {
   return COLOR_STOPS[COLOR_STOPS.length - 1][1];
 }
 
+function normalizeSensorPrecision(item) {
+  return {
+    ...item,
+    co2: toRoundedNumber(item.co2, 1),
+    ch4: toRoundedNumber(item.ch4, 2),
+  };
+}
+
+function getHistoryMetricNumber(row, metric) {
+  if (metric === "ctsi") return toRoundedNumber(row.ctsi, 1);
+
+  const config = METRIC_CONFIG[metric];
+  if (!config) return null;
+
+  if (metric === "chlorophyllA") {
+    return toRoundedNumber(row.chlorophyllA, config.decimal);
+  }
+
+  if (metric === "totalPhosphorus") {
+    return toRoundedNumber(row.totalPhosphorus, config.decimal);
+  }
+
+  return toRoundedNumber(row[config.dbKey], config.decimal);
+}
+
+function toRoundedNumber(value, decimal = 2) {
+  if (value === null || value === undefined || value === "") return null;
+
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+
+  return Number(number.toFixed(decimal));
+}
+
+function buildHistoryExcelColumnWidths(metric) {
+  if (metric !== "all") {
+    return [
+      { wch: 22 },
+      { wch: 20 },
+      { wch: 10 },
+      { wch: 12 },
+      { wch: 22 },
+    ];
+  }
+
+  return [
+    { wch: 22 },
+    { wch: 20 },
+    { wch: 10 },
+    { wch: 12 },
+    { wch: 13 },
+    { wch: 13 },
+    { wch: 14 },
+    { wch: 18 },
+    { wch: 15 },
+    { wch: 14 },
+    { wch: 11 },
+    { wch: 16 },
+  ];
+}
+
+function applyHistoryExcelNumberFormats(worksheet, rowCount, metric) {
+  if (rowCount <= 0) return;
+
+  const startRow = 2;
+  const endRow = rowCount + 1;
+
+  const setColumnFormat = (column, format) => {
+    for (let row = startRow; row <= endRow; row += 1) {
+      const cell = worksheet[`${column}${row}`];
+      if (cell && typeof cell.v === "number") cell.z = format;
+    }
+  };
+
+  if (metric !== "all") {
+    const decimal = getHistoryMetricInfo(metric).decimal;
+    setColumnFormat("E", decimal === 1 ? "0.0" : decimal === 2 ? "0.00" : "0.0000");
+    return;
+  }
+
+  setColumnFormat("E", "0.0");
+  setColumnFormat("F", "0.00");
+  setColumnFormat("G", "0.00");
+  setColumnFormat("H", "0.00");
+  setColumnFormat("I", "0.00");
+  setColumnFormat("J", "0.00");
+  setColumnFormat("K", "0.0");
+}
+
+function sanitizeFileName(value) {
+  return String(value || "監測資料")
+    .replace(/[\\/:*?"<>|]/g, "_")
+    .replace(/\s+/g, "_");
+}
+
+function formatFileTimestamp(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate()),
+    "_",
+    pad(date.getHours()),
+    pad(date.getMinutes()),
+    pad(date.getSeconds()),
+  ].join("");
+}
+
 function generateBasicSensorData(point) {
   const co2 = 520 + Math.random() * 80;
   const ch4 = 1.98 + Math.random() * 0.04;
@@ -1311,8 +1491,8 @@ function generateBasicSensorData(point) {
 
   return {
     ...point,
-    co2: Number(co2.toFixed(2)),
-    ch4: Number(ch4.toFixed(4)),
+    co2: Number(co2.toFixed(1)),
+    ch4: Number(ch4.toFixed(2)),
     transparency: Number(transparency.toFixed(2)),
     chlorophyllA: Number(chlorophyllA.toFixed(2)),
     totalPhosphorus: Number(totalPhosphorus.toFixed(2)),

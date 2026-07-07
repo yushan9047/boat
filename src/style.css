@@ -560,6 +560,7 @@ tbody tr:hover {
 
 .history-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -577,6 +578,15 @@ tbody tr:hover {
 .history-actions button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.history-actions .export-button {
+  background: #2e7d6d;
+  color: #ffffff;
+}
+
+.history-actions .export-button:hover:not(:disabled) {
+  background: #246b5d;
 }
 
 .history-actions .secondary-button {
