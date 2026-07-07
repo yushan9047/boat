@@ -24,6 +24,12 @@ const COLOR_STOPS = [
 const METRIC_CONFIG = {
   co2: { label: "CO₂", unit: "ppm", decimal: 1, dbKey: "co2" },
   ch4: { label: "CH₄", unit: "ppm", decimal: 2, dbKey: "ch4" },
+  dailyTotalCarbonFlux: {
+    label: "Daily Total Carbon Flux",
+    unit: "mg/day/m²",
+    decimal: 2,
+    dbKey: "dailyTotalCarbonFlux",
+  },
   transparency: {
     label: "透明度",
     unit: "m",
@@ -55,7 +61,7 @@ const METRIC_GROUPS = [
     id: "carbon",
     label: "碳排通量",
     caption: "碳排相關監測指標",
-    metrics: ["co2", "ch4"],
+    metrics: ["co2", "ch4", "dailyTotalCarbonFlux"],
   },
   {
     id: "ctsi",
@@ -317,6 +323,10 @@ export default function App() {
           ...basicFields,
           "CO₂ (ppm)": toRoundedNumber(row.co2, 1),
           "CH₄ (ppm)": toRoundedNumber(row.ch4, 2),
+          "Daily Total Carbon Flux (mg/day/m²)": toRoundedNumber(
+            row.dailyTotalCarbonFlux,
+            2
+          ),
           "透明度 (m)": toRoundedNumber(row.transparency, 2),
           "葉綠素 a (μg/L)": toRoundedNumber(row.chlorophyllA, 2),
           "總磷 (μg/L)": toRoundedNumber(row.totalPhosphorus, 2),
@@ -667,6 +677,10 @@ export default function App() {
                       />
                       <div>CO₂：{formatNumber(point.co2, 1)} ppm</div>
                       <div>CH₄：{formatNumber(point.ch4, 2)} ppm</div>
+                      <div>
+                        Daily Total Carbon Flux：
+                        {formatNumber(point.dailyTotalCarbonFlux, 2)} mg/day/m²
+                      </div>
                       <div>透明度：{point.transparency} m</div>
                       <div>葉綠素 a：{point.chlorophyllA} μg/L</div>
                       <div>總磷：{point.totalPhosphorus} μg/L</div>
@@ -765,6 +779,7 @@ export default function App() {
                   <th>點位</th>
                   <th>CO₂</th>
                   <th>CH₄</th>
+                  <th>Daily Total Carbon Flux</th>
                   <th>透明度</th>
                   <th>葉綠素 a</th>
                   <th>總磷</th>
@@ -776,7 +791,7 @@ export default function App() {
               <tbody>
                 {displayData.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="empty">
+                    <td colSpan="10" className="empty">
                       等待資料接收中
                     </td>
                   </tr>
@@ -786,6 +801,7 @@ export default function App() {
                       <td>{item.point_id}</td>
                       <td>{formatNumber(item.co2, 1)}</td>
                       <td>{formatNumber(item.ch4, 2)}</td>
+                      <td>{formatNumber(item.dailyTotalCarbonFlux, 2)}</td>
                       <td>{item.transparency}</td>
                       <td>{item.chlorophyllA}</td>
                       <td>{item.totalPhosphorus}</td>
@@ -868,6 +884,9 @@ export default function App() {
               <optgroup label="碳排通量">
                 <option value="co2">CO₂</option>
                 <option value="ch4">CH₄</option>
+                <option value="dailyTotalCarbonFlux">
+                  Daily Total Carbon Flux
+                </option>
               </optgroup>
               <optgroup label="CTSI 卡爾森指數">
                 <option value="transparency">透明度</option>
@@ -916,6 +935,7 @@ export default function App() {
                   <>
                     <th>CO₂</th>
                     <th>CH₄</th>
+                    <th>Daily Total Carbon Flux</th>
                     <th>透明度</th>
                     <th>葉綠素 a</th>
                     <th>總磷</th>
@@ -934,7 +954,7 @@ export default function App() {
             <tbody>
               {historyResults.length === 0 ? (
                 <tr>
-                  <td colSpan={historyMetric === "all" ? 11 : 5} className="empty">
+                  <td colSpan={historyMetric === "all" ? 12 : 5} className="empty">
                     尚無查詢資料
                   </td>
                 </tr>
@@ -949,6 +969,7 @@ export default function App() {
                       <>
                         <td>{formatNumber(row.co2, 1)}</td>
                         <td>{formatNumber(row.ch4, 2)}</td>
+                        <td>{formatNumber(row.dailyTotalCarbonFlux, 2)}</td>
                         <td>{formatNumber(row.transparency, 2)}</td>
                         <td>{formatNumber(row.chlorophyllA, 2)}</td>
                         <td>{formatNumber(row.totalPhosphorus, 2)}</td>
@@ -1242,6 +1263,19 @@ function idwInterpolate(lat, lng, data, metric) {
   return denominator === 0 ? 0 : numerator / denominator;
 }
 
+
+function calculateDailyTotalCarbonFlux(co2, ch4) {
+  const co2Value = Number(co2);
+  const ch4Value = Number(ch4);
+
+  if (!Number.isFinite(co2Value) || !Number.isFinite(ch4Value)) {
+    return null;
+  }
+
+  const flux = 13128 - 20.8 * co2Value - 2113 * ch4Value;
+  return Number(flux.toFixed(2));
+}
+
 function calculateCtsiValues(transparency, chlorophyllA, totalPhosphorus) {
   const sd = Number(transparency);
   const chla = Number(chlorophyllA);
@@ -1286,6 +1320,7 @@ function attachCtsiValues(item) {
   return {
     ...item,
     ...calculated,
+    dailyTotalCarbonFlux: calculateDailyTotalCarbonFlux(item.co2, item.ch4),
   };
 }
 
@@ -1424,6 +1459,7 @@ function buildHistoryExcelColumnWidths(metric) {
     { wch: 12 },
     { wch: 13 },
     { wch: 13 },
+    { wch: 34 },
     { wch: 14 },
     { wch: 18 },
     { wch: 15 },
@@ -1458,7 +1494,8 @@ function applyHistoryExcelNumberFormats(worksheet, rowCount, metric) {
   setColumnFormat("H", "0.00");
   setColumnFormat("I", "0.00");
   setColumnFormat("J", "0.00");
-  setColumnFormat("K", "0.0");
+  setColumnFormat("K", "0.00");
+  setColumnFormat("L", "0.0");
 }
 
 function sanitizeFileName(value) {

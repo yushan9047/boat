@@ -1707,3 +1707,36 @@ tbody tr:hover {
   outline: 3px solid rgba(46, 125, 109, 0.24);
   outline-offset: 3px;
 }
+
+
+/* ===== Daily Total Carbon Flux ===== */
+
+.metric-level-two-carbon .metric-level-two-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metric-level-two-carbon .metric-level-two-options button {
+  min-width: 0;
+}
+
+.metric-level-two-carbon .metric-level-two-options button span {
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.metric-level-two-carbon .metric-level-two-options button small {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.table-panel th:nth-child(4),
+.table-panel td:nth-child(4) {
+  min-width: 190px;
+}
+
+@media (max-width: 760px) {
+  .metric-level-two-carbon .metric-level-two-options {
+    grid-template-columns: 1fr;
+  }
+}
