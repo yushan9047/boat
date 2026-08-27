@@ -135,6 +135,13 @@ export default function App() {
   const [showCtsiModal, setShowCtsiModal] = useState(false);
   const [ctsiTab, setCtsiTab] = useState("intro");
 
+  const [dataMode, setDataMode] = useState("live");
+  const [manualRows, setManualRows] = useState([]);
+  const [manualDisplayData, setManualDisplayData] = useState([]);
+  const [manualMessage, setManualMessage] = useState("可切換至輸入數據模式，手動輸入監測點資料後更新熱圖。");
+  const [videoStatus, setVideoStatus] = useState("");
+  const [lastTransitionData, setLastTransitionData] = useState(null);
+
   const [historyStart, setHistoryStart] = useState("");
   const [historyEnd, setHistoryEnd] = useState("");
   const [historyLake, setHistoryLake] = useState("all");
@@ -146,6 +153,7 @@ export default function App() {
   const [historyError, setHistoryError] = useState("");
 
   const savedRoundsRef = useRef(new Set());
+  const manualRowIdRef = useRef(0);
 
   const currentLake = useMemo(() => {
     return LAKES.find((lake) => lake.id === selectedLakeId) || LAKES[0];
@@ -177,6 +185,19 @@ export default function App() {
     return [];
   }, [currentLake]);
 
+  useEffect(() => {
+    const initialRows =
+      monitorPoints.length > 0
+        ? monitorPoints.map((point, index) => createManualInputRow(point, index))
+        : [createManualInputRow({ point_id: "M1", name: "手動點位 1" }, 0)];
+
+    setManualRows(initialRows);
+    setManualDisplayData([]);
+    setLastTransitionData(null);
+    setVideoStatus("");
+    setManualMessage("已載入目前監測點，請輸入資料後按「儲存並更新圖」。");
+  }, [selectedLakeId, monitorPoints]);
+
   const historyPointOptions = useMemo(() => {
     if (historyLake === "all") return [];
 
@@ -206,6 +227,164 @@ export default function App() {
   function openCtsiExplanation(tab = "intro") {
     setCtsiTab(tab);
     setShowCtsiModal(true);
+  }
+
+  function createManualInputRow(point = {}, index = 0) {
+    const rowNumber = index + 1;
+    manualRowIdRef.current += 1;
+
+    return {
+      rowKey: `manual-row-${manualRowIdRef.current}`,
+      point_id: point.point_id || `M${rowNumber}`,
+      name: point.name || `手動點位 ${rowNumber}`,
+      lat: point.lat ?? currentLake?.center?.lat ?? "",
+      lng: point.lng ?? currentLake?.center?.lng ?? "",
+      co2: point.co2 ?? "",
+      ch4: point.ch4 ?? "",
+      transparency: point.transparency ?? "",
+      chlorophyllA: point.chlorophyllA ?? "",
+      totalPhosphorus: point.totalPhosphorus ?? "",
+      turbidity: point.turbidity ?? "",
+    };
+  }
+
+  function handleDataModeChange(nextMode) {
+    setDataMode(nextMode);
+
+    if (nextMode === "manual") {
+      setIsRunning(false);
+      setSaveStatus(
+        manualDisplayData.length > 0
+          ? `已套用輸入資料，共 ${manualDisplayData.length} 筆`
+          : "已切換為輸入數據模式，尚未套用資料"
+      );
+      return;
+    }
+
+    setIsRunning(true);
+    setSaveStatus("已切換為現場監測數據模式");
+  }
+
+  function handleManualRowChange(rowKey, field, value) {
+    setManualRows((previousRows) =>
+      previousRows.map((row) => (row.rowKey === rowKey ? { ...row, [field]: value } : row))
+    );
+  }
+
+  function addManualRow() {
+    setManualRows((previousRows) => [
+      ...previousRows,
+      createManualInputRow(
+        {
+          point_id: `M${previousRows.length + 1}`,
+          name: `手動點位 ${previousRows.length + 1}`,
+        },
+        previousRows.length
+      ),
+    ]);
+    setManualMessage("已新增一筆輸入資料列。");
+  }
+
+  function removeManualRow(rowKey) {
+    setManualRows((previousRows) => previousRows.filter((row) => row.rowKey !== rowKey));
+    setManualMessage("已刪除資料列，請重新儲存後更新圖。");
+  }
+
+  function resetManualRowsToMonitorPoints() {
+    const resetRows =
+      monitorPoints.length > 0
+        ? monitorPoints.map((point, index) => createManualInputRow(point, index))
+        : [createManualInputRow({ point_id: "M1", name: "手動點位 1" }, 0)];
+
+    setManualRows(resetRows);
+    setManualDisplayData([]);
+    setLastTransitionData(null);
+    setVideoStatus("");
+    setManualMessage("已重設為目前湖區的監測點，請重新輸入資料。");
+  }
+
+  function buildManualDataFromRows() {
+    const normalizedRows = manualRows
+      .map((row, index) => {
+        const lat = parseNullableNumber(row.lat);
+        const lng = parseNullableNumber(row.lng);
+
+        if (lat === null || lng === null) return null;
+
+        const baseItem = {
+          point_id: String(row.point_id || `M${index + 1}`).trim(),
+          name: String(row.name || row.point_id || `手動點位 ${index + 1}`).trim(),
+          lat,
+          lng,
+          co2: toRoundedNumber(row.co2, 1),
+          ch4: toRoundedNumber(row.ch4, 2),
+          transparency: toRoundedNumber(row.transparency, 2),
+          chlorophyllA: toRoundedNumber(row.chlorophyllA, 2),
+          totalPhosphorus: toRoundedNumber(row.totalPhosphorus, 2),
+          turbidity: toRoundedNumber(row.turbidity, 2),
+          timestamp: new Date().toLocaleString("zh-TW", { hour12: false }),
+        };
+
+        return attachCtsiValues(baseItem);
+      })
+      .filter(Boolean);
+
+    const seenPointIds = new Set();
+    return normalizedRows.map((row, index) => {
+      const originalId = row.point_id || `M${index + 1}`;
+      const uniqueId = seenPointIds.has(originalId) ? `${originalId}-${index + 1}` : originalId;
+      seenPointIds.add(uniqueId);
+
+      return {
+        ...row,
+        point_id: uniqueId,
+      };
+    });
+  }
+
+  function saveManualInputData() {
+    const normalizedRows = buildManualDataFromRows();
+
+    if (normalizedRows.length === 0) {
+      setManualMessage("至少需要一筆含有緯度與經度的資料，才能更新圖面。");
+      return;
+    }
+
+    const previousData = displayData.length > 0 ? displayData : manualDisplayData;
+
+    setLastTransitionData({
+      fromData: previousData.length > 0 ? previousData : createBaselineTransitionData(normalizedRows, metric),
+      toData: normalizedRows,
+      lakeName: currentLake.name,
+    });
+    setManualDisplayData(normalizedRows);
+    setDataMode("manual");
+    setIsRunning(false);
+    setSaveStatus(`已套用輸入資料，共 ${normalizedRows.length} 筆`);
+    setManualMessage(`已儲存並更新圖面，共套用 ${normalizedRows.length} 筆輸入資料。`);
+    setVideoStatus("已建立變化資料，可下載影片。");
+  }
+
+  async function downloadManualTransitionVideo() {
+    if (!lastTransitionData || manualDisplayData.length === 0) {
+      setVideoStatus("請先按「儲存並更新圖」，再下載變化影片。");
+      return;
+    }
+
+    setVideoStatus("正在產生影片，請稍候...");
+
+    try {
+      await createAndDownloadHeatmapTransitionVideo({
+        ...lastTransitionData,
+        metric,
+        metricInfo,
+        polygons: lakePolygons,
+      });
+      setVideoStatus("影片已下載。");
+    } catch (error) {
+      console.error("影片產生失敗：", error);
+      setVideoStatus(error?.message || "影片產生失敗，請確認瀏覽器是否支援 MediaRecorder。");
+    }
   }
 
   useEffect(() => {
@@ -359,7 +538,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!isRunning || monitorPoints.length === 0) return;
+    if (dataMode !== "live" || !isRunning || monitorPoints.length === 0) return;
 
     const timer = setInterval(() => {
       const point = monitorPoints[currentIndex];
@@ -395,14 +574,20 @@ export default function App() {
     }, 2000);
 
     return () => clearInterval(timer);
-  }, [currentIndex, isRunning, roundNumber, monitorPoints, selectedLakeId]);
+  }, [currentIndex, isRunning, roundNumber, monitorPoints, selectedLakeId, dataMode]);
 
-  const displayData = completedData.length > 0 ? completedData : currentRound;
+  const liveDisplayData = completedData.length > 0 ? completedData : currentRound;
+  const displayData = dataMode === "manual" ? manualDisplayData : liveDisplayData;
 
   const heatmapResult = useMemo(() => {
-    if (displayData.length < monitorPoints.length || monitorPoints.length === 0) return null;
+    if (displayData.length === 0) return null;
+
+    if (dataMode === "live" && displayData.length < monitorPoints.length) {
+      return null;
+    }
+
     return createInterpolatedLakeHeatmap(displayData, metric, lakePolygons);
-  }, [displayData, metric, lakePolygons, monitorPoints]);
+  }, [displayData, metric, lakePolygons, monitorPoints, dataMode]);
 
   const metricInfo = METRIC_CONFIG[metric];
 
@@ -426,12 +611,17 @@ export default function App() {
 
   const ctsiLevel = averageCtsi === null ? "資料不足" : classifyCtsi(averageCtsi);
 
-  const statusText =
+  const liveStatusText =
     currentRound.length === 0
       ? `第 ${roundNumber} 輪監測準備中`
       : currentRound.length < monitorPoints.length
       ? `第 ${roundNumber} 輪監測中：已收到 ${currentRound.length}/${monitorPoints.length} 點`
       : "本輪資料已完成，正在更新熱圖";
+
+  const statusText =
+    dataMode === "manual"
+      ? `輸入數據模式：已套用 ${manualDisplayData.length} 筆資料`
+      : liveStatusText;
 
   const historyMetricInfo = getHistoryMetricInfo(historyMetric);
 
@@ -479,9 +669,31 @@ export default function App() {
         </div>
 
         <div className="status-card">
-          <span className={isRunning ? "status-dot active" : "status-dot"} />
-          <div>
-            <p>監測狀態</p>
+          <span
+            className={
+              dataMode === "live" && isRunning ? "status-dot active" : "status-dot"
+            }
+          />
+          <div className="status-content">
+            <div className="status-topline">
+              <p>監測狀態</p>
+              <div className="data-source-switch" aria-label="資料來源切換">
+                <button
+                  type="button"
+                  className={dataMode === "live" ? "active" : ""}
+                  onClick={() => handleDataModeChange("live")}
+                >
+                  現場監測數據
+                </button>
+                <button
+                  type="button"
+                  className={dataMode === "manual" ? "active" : ""}
+                  onClick={() => handleDataModeChange("manual")}
+                >
+                  輸入數據
+                </button>
+              </div>
+            </div>
             <strong>{statusText}</strong>
             <p style={{ marginTop: "8px", fontSize: "13px" }}>{saveStatus}</p>
           </div>
@@ -709,9 +921,11 @@ export default function App() {
 
             {!heatmapResult && (
               <div className="waiting-layer">
-                <strong>等待本輪監測完成</strong>
+                <strong>{dataMode === "manual" ? "尚未套用輸入資料" : "等待本輪監測完成"}</strong>
                 <span>
-                  目前已收到 {currentRound.length}/{monitorPoints.length} 點
+                  {dataMode === "manual"
+                    ? "請在下方輸入監測數據，並按「儲存並更新圖」。"
+                    : `目前已收到 ${currentRound.length}/${monitorPoints.length} 點`}
                 </span>
               </div>
             )}
@@ -765,8 +979,12 @@ export default function App() {
               </button>
             </div>
 
-            <button className="control-button" onClick={() => setIsRunning((prev) => !prev)}>
-              {isRunning ? "暫停接收" : "繼續接收"}
+            <button
+              className="control-button"
+              onClick={() => setIsRunning((prev) => !prev)}
+              disabled={dataMode === "manual"}
+            >
+              {dataMode === "manual" ? "輸入數據模式中" : isRunning ? "暫停接收" : "繼續接收"}
             </button>
           </section>
 
@@ -816,6 +1034,204 @@ export default function App() {
           </section>
         </aside>
       </main>
+
+      <section className={`panel manual-input-panel ${dataMode === "manual" ? "active" : ""}`}>
+        <div className="manual-input-header">
+          <div>
+            <p className="manual-input-eyebrow">Manual Data Input</p>
+            <h2>監測資料手動輸入</h2>
+            <p>
+              可自行新增或刪除監測點資料。按下「儲存並更新圖」後，地圖、熱圖、統計卡與本輪資料表會依照輸入資料重新計算。
+            </p>
+          </div>
+
+          <div className="manual-input-actions">
+            <button type="button" onClick={() => handleDataModeChange("manual")}>
+              切換為輸入數據
+            </button>
+            <button type="button" className="secondary-button" onClick={addManualRow}>
+              新增資料列
+            </button>
+            <button type="button" className="secondary-button" onClick={resetManualRowsToMonitorPoints}>
+              套用目前監測點
+            </button>
+            <button type="button" className="primary-button" onClick={saveManualInputData}>
+              儲存並更新圖
+            </button>
+            <button
+              type="button"
+              className="video-button"
+              onClick={downloadManualTransitionVideo}
+              disabled={!lastTransitionData || manualDisplayData.length === 0 || videoStatus === "正在產生影片，請稍候..."}
+            >
+              下載變化影片
+            </button>
+          </div>
+        </div>
+
+        <div className="manual-input-note">
+          <strong>目前模式：</strong>
+          {dataMode === "manual" ? "輸入數據模式" : "現場監測數據模式"}。
+          CO₂、CH₄ 與 CTSI 會依照輸入值自動計算顯示精度；Daily Total Carbon Flux 會依公式自動產生。
+        </div>
+
+        <div className="manual-table-wrapper">
+          <table className="manual-input-table">
+            <thead>
+              <tr>
+                <th>點位</th>
+                <th>名稱</th>
+                <th>緯度</th>
+                <th>經度</th>
+                <th>CO₂</th>
+                <th>CH₄</th>
+                <th>透明度</th>
+                <th>葉綠素 a</th>
+                <th>總磷</th>
+                <th>濁度</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {manualRows.length === 0 ? (
+                <tr>
+                  <td colSpan="11" className="empty">
+                    尚無輸入資料列
+                  </td>
+                </tr>
+              ) : (
+                manualRows.map((row, index) => (
+                  <tr key={row.rowKey}>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.point_id}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "point_id", event.target.value)
+                        }
+                        placeholder={`M${index + 1}`}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={row.name}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "name", event.target.value)
+                        }
+                        placeholder="監測點名稱"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        step="0.000001"
+                        value={row.lat}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "lat", event.target.value)
+                        }
+                        placeholder="緯度"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        step="0.000001"
+                        value={row.lng}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "lng", event.target.value)
+                        }
+                        placeholder="經度"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={row.co2}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "co2", event.target.value)
+                        }
+                        placeholder="ppm"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={row.ch4}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "ch4", event.target.value)
+                        }
+                        placeholder="ppm"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={row.transparency}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "transparency", event.target.value)
+                        }
+                        placeholder="m"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={row.chlorophyllA}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "chlorophyllA", event.target.value)
+                        }
+                        placeholder="μg/L"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={row.totalPhosphorus}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "totalPhosphorus", event.target.value)
+                        }
+                        placeholder="μg/L"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={row.turbidity}
+                        onChange={(event) =>
+                          handleManualRowChange(row.rowKey, "turbidity", event.target.value)
+                        }
+                        placeholder="NTU"
+                      />
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="row-delete-button"
+                        onClick={() => removeManualRow(row.rowKey)}
+                        disabled={manualRows.length <= 1}
+                      >
+                        刪除
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="manual-input-footer">
+          <span>{manualMessage}</span>
+          <span>{videoStatus}</span>
+        </div>
+      </section>
 
       <section className="panel history-panel">
         <div className="history-header">
@@ -1173,6 +1589,339 @@ export default function App() {
       )}
     </div>
   );
+}
+
+function parseNullableNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+
+  return number;
+}
+
+function createBaselineTransitionData(targetData, metric) {
+  const values = targetData
+    .map((item) => item[metric])
+    .filter((value) => typeof value === "number" && Number.isFinite(value));
+
+  const baselineValue = values.length > 0 ? Math.min(...values) : 0;
+
+  return targetData.map((item) => ({
+    ...item,
+    [metric]: baselineValue,
+  }));
+}
+
+function interpolateTransitionData(fromData, toData, metric, progress) {
+  const clampedProgress = Math.max(0, Math.min(1, progress));
+
+  return toData.map((targetItem, index) => {
+    const sourceItem =
+      fromData.find((item) => item.point_id === targetItem.point_id) || fromData[index] || targetItem;
+
+    const sourceValue = Number(sourceItem?.[metric]);
+    const targetValue = Number(targetItem?.[metric]);
+
+    const safeTargetValue = Number.isFinite(targetValue) ? targetValue : null;
+    const safeSourceValue = Number.isFinite(sourceValue) ? sourceValue : safeTargetValue;
+
+    const interpolatedValue =
+      safeTargetValue === null || safeSourceValue === null
+        ? safeTargetValue
+        : safeSourceValue + (safeTargetValue - safeSourceValue) * clampedProgress;
+
+    return {
+      ...targetItem,
+      [metric]:
+        interpolatedValue === null
+          ? null
+          : Number(interpolatedValue.toFixed(METRIC_CONFIG[metric]?.decimal ?? 2)),
+    };
+  });
+}
+
+async function createAndDownloadHeatmapTransitionVideo({
+  fromData,
+  toData,
+  metric,
+  metricInfo,
+  polygons,
+  lakeName,
+}) {
+  if (typeof MediaRecorder === "undefined") {
+    throw new Error("此瀏覽器不支援 MediaRecorder，請使用 Chrome 或 Edge 下載影片。");
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 960;
+  canvas.height = 720;
+
+  if (!canvas.captureStream) {
+    throw new Error("此瀏覽器不支援 canvas 錄影功能。");
+  }
+
+  const fps = 15;
+  const durationSeconds = 4;
+  const totalFrames = fps * durationSeconds;
+  const stream = canvas.captureStream(fps);
+  const mimeType = getSupportedVideoMimeType();
+  const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+  const chunks = [];
+
+  recorder.ondataavailable = (event) => {
+    if (event.data && event.data.size > 0) chunks.push(event.data);
+  };
+
+  const stopped = new Promise((resolve) => {
+    recorder.onstop = resolve;
+  });
+
+  recorder.start();
+
+  for (let frame = 0; frame <= totalFrames; frame += 1) {
+    const progress = frame / totalFrames;
+    const frameData = interpolateTransitionData(fromData, toData, metric, progress);
+
+    drawTransitionVideoFrame(canvas, {
+      data: frameData,
+      metric,
+      metricInfo,
+      polygons,
+      lakeName,
+      progress,
+    });
+
+    await wait(Math.round(1000 / fps));
+  }
+
+  recorder.stop();
+  await stopped;
+  stream.getTracks().forEach((track) => track.stop());
+
+  const blob = new Blob(chunks, { type: mimeType || "video/webm" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `${sanitizeFileName(lakeName)}_${sanitizeFileName(metricInfo.label)}_變化影片_${formatFileTimestamp(new Date())}.webm`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getSupportedVideoMimeType() {
+  const candidates = [
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm",
+  ];
+
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+}
+
+function drawTransitionVideoFrame(canvas, { data, metric, metricInfo, polygons, lakeName, progress }) {
+  const context = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  context.clearRect(0, 0, width, height);
+  context.fillStyle = "#f4faf7";
+  context.fillRect(0, 0, width, height);
+
+  context.fillStyle = "#12372f";
+  context.font = "700 34px Inter, sans-serif";
+  context.fillText(`${lakeName}｜${metricInfo.label}`, 44, 62);
+
+  context.fillStyle = "#5f716c";
+  context.font = "600 18px Inter, sans-serif";
+  context.fillText(`Heatmap transition｜${Math.round(progress * 100)}%`, 44, 94);
+
+  const heatmap = createInterpolatedCanvas(data, metric, polygons, 820, 500);
+
+  if (heatmap) {
+    context.fillStyle = "#ffffff";
+    roundRect(context, 44, 124, 872, 530, 26);
+    context.fill();
+
+    context.drawImage(heatmap.canvas, 70, 150, 820, 500);
+    drawVideoPointLabels(context, data, heatmap.bounds, 70, 150, 820, 500);
+
+    context.fillStyle = "#12372f";
+    context.font = "700 17px Inter, sans-serif";
+    context.fillText(`${metricInfo.label} ${metricInfo.unit}`, 70, 676);
+
+    drawVideoLegend(context, heatmap.minText, heatmap.maxText, 660, 660, 230);
+  } else {
+    context.fillStyle = "#ffffff";
+    roundRect(context, 44, 124, 872, 530, 26);
+    context.fill();
+    context.fillStyle = "#6c7d78";
+    context.font = "700 26px Inter, sans-serif";
+    context.fillText("目前指標資料不足，無法產生熱圖。", 260, 390);
+  }
+}
+
+function createInterpolatedCanvas(data, metric, polygons, width = 720, height = 720) {
+  const padding = 0.00015;
+  const allPoints = polygons.flat();
+
+  if (allPoints.length === 0) return null;
+
+  const lats = allPoints.map((point) => point[0]);
+  const lngs = allPoints.map((point) => point[1]);
+
+  const minLat = Math.min(...lats) - padding;
+  const maxLat = Math.max(...lats) + padding;
+  const minLng = Math.min(...lngs) - padding;
+  const maxLng = Math.max(...lngs) + padding;
+
+  const usableData = data.filter(
+    (item) => typeof item[metric] === "number" && Number.isFinite(item[metric])
+  );
+
+  if (usableData.length === 0) return null;
+
+  const values = usableData.map((item) => item[metric]);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  const imageData = context.createImageData(width, height);
+  const pixels = imageData.data;
+
+  for (let y = 0; y < height; y += 1) {
+    const lat = maxLat - (y / (height - 1)) * (maxLat - minLat);
+
+    for (let x = 0; x < width; x += 1) {
+      const lng = minLng + (x / (width - 1)) * (maxLng - minLng);
+      const index = (y * width + x) * 4;
+
+      if (!isInsideAnyPolygon([lat, lng], polygons)) {
+        pixels[index + 3] = 0;
+        continue;
+      }
+
+      const interpolated = idwInterpolate(lat, lng, usableData, metric);
+      const normalized =
+        maxValue === minValue ? 0.5 : (interpolated - minValue) / (maxValue - minValue);
+      const [red, green, blue] = getInterpolatedColor(normalized);
+
+      pixels[index] = red;
+      pixels[index + 1] = green;
+      pixels[index + 2] = blue;
+      pixels[index + 3] = 230;
+    }
+  }
+
+  context.putImageData(imageData, 0, 0);
+
+  drawPolygonOutlines(context, polygons, { minLat, maxLat, minLng, maxLng }, width, height);
+
+  return {
+    canvas,
+    bounds: { minLat, maxLat, minLng, maxLng },
+    minText: minValue.toFixed(METRIC_CONFIG[metric].decimal),
+    maxText: maxValue.toFixed(METRIC_CONFIG[metric].decimal),
+  };
+}
+
+function drawPolygonOutlines(context, polygons, bounds, width, height) {
+  context.save();
+  context.strokeStyle = "#12372f";
+  context.lineWidth = 3;
+
+  polygons.forEach((polygon) => {
+    context.beginPath();
+
+    polygon.forEach(([lat, lng], index) => {
+      const { x, y } = projectLatLngToCanvas(lat, lng, bounds, width, height);
+
+      if (index === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    });
+
+    context.closePath();
+    context.stroke();
+  });
+
+  context.restore();
+}
+
+function drawVideoPointLabels(context, data, bounds, offsetX, offsetY, width, height) {
+  context.save();
+  context.font = "700 14px Inter, sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+
+  data.forEach((point) => {
+    if (!Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lng))) return;
+
+    const { x, y } = projectLatLngToCanvas(point.lat, point.lng, bounds, width, height);
+    const px = offsetX + x;
+    const py = offsetY + y;
+
+    context.fillStyle = "#ffffff";
+    context.beginPath();
+    context.arc(px, py, 11, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = "#1f4f46";
+    context.beginPath();
+    context.arc(px, py, 7, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = "#12372f";
+    context.fillText(point.point_id, px, py - 22);
+  });
+
+  context.restore();
+}
+
+function projectLatLngToCanvas(lat, lng, bounds, width, height) {
+  const x = ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * width;
+  const y = ((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat)) * height;
+
+  return { x, y };
+}
+
+function drawVideoLegend(context, minText, maxText, x, y, width) {
+  const gradient = context.createLinearGradient(x, y, x + width, y);
+
+  COLOR_STOPS.forEach(([stop, color]) => {
+    gradient.addColorStop(stop, `rgb(${color[0]}, ${color[1]}, ${color[2]})`);
+  });
+
+  context.fillStyle = gradient;
+  roundRect(context, x, y, width, 16, 999);
+  context.fill();
+
+  context.fillStyle = "#5f716c";
+  context.font = "700 13px Inter, sans-serif";
+  context.fillText(minText, x, y + 38);
+  context.fillText(maxText, x + width - 34, y + 38);
+}
+
+function roundRect(context, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.arcTo(x + width, y, x + width, y + height, safeRadius);
+  context.arcTo(x + width, y + height, x, y + height, safeRadius);
+  context.arcTo(x, y + height, x, y, safeRadius);
+  context.arcTo(x, y, x + width, y, safeRadius);
+  context.closePath();
 }
 
 function createInterpolatedLakeHeatmap(data, metric, polygons) {

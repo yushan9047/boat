@@ -1740,3 +1740,264 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Data source switch ===== */
+
+.status-content {
+  width: 100%;
+  min-width: 0;
+}
+
+.status-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.status-topline p {
+  margin: 0;
+}
+
+.data-source-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid #d8e7e2;
+  border-radius: 999px;
+  background: #edf5f2;
+}
+
+.data-source-switch button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: transparent;
+  color: #4d6961;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.data-source-switch button.active {
+  background: #164f43;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(22, 79, 67, 0.16);
+}
+
+.control-button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== Manual input panel ===== */
+
+.manual-input-panel {
+  margin-top: 28px;
+  padding: 28px;
+}
+
+.manual-input-panel.active {
+  border-color: #9cc9bd;
+  box-shadow: 0 18px 52px rgba(24, 89, 73, 0.12);
+}
+
+.manual-input-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.manual-input-eyebrow {
+  margin: 0 0 8px;
+  color: #2e7d6d;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.manual-input-header h2 {
+  margin: 0;
+  color: #12372f;
+  font-size: 26px;
+  font-weight: 950;
+}
+
+.manual-input-header p {
+  margin: 10px 0 0;
+  color: #5f716c;
+  line-height: 1.6;
+  font-weight: 650;
+}
+
+.manual-input-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 360px;
+}
+
+.manual-input-actions button {
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  background: #1f4f46;
+  color: #ffffff;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.manual-input-actions .secondary-button {
+  background: #edf5f2;
+  color: #1f4f46;
+}
+
+.manual-input-actions .primary-button {
+  background: #164f43;
+}
+
+.manual-input-actions .video-button {
+  background: #2e7d6d;
+}
+
+.manual-input-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.manual-input-note {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid #d8e7e2;
+  border-radius: 16px;
+  background: #f7fbf9;
+  color: #4f6760;
+  line-height: 1.65;
+  font-weight: 650;
+}
+
+.manual-input-note strong {
+  color: #164f43;
+}
+
+.manual-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #d8e7e2;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.manual-input-table {
+  min-width: 1320px;
+  margin-top: 0;
+}
+
+.manual-input-table thead {
+  background: #edf5f2;
+}
+
+.manual-input-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #edf5f2;
+}
+
+.manual-input-table input {
+  width: 100%;
+  min-width: 105px;
+  border: 1px solid #d8e7e2;
+  border-radius: 12px;
+  padding: 10px 11px;
+  background: #ffffff;
+  color: #12372f;
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+}
+
+.manual-input-table input:focus {
+  border-color: #2e7d6d;
+  box-shadow: 0 0 0 4px rgba(46, 125, 109, 0.1);
+}
+
+.manual-input-table td:nth-child(1) input {
+  min-width: 82px;
+}
+
+.manual-input-table td:nth-child(2) input {
+  min-width: 150px;
+}
+
+.row-delete-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 13px;
+  background: #fff0ed;
+  color: #b42318;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.row-delete-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.manual-input-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 14px;
+  color: #5f716c;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+@media (max-width: 1300px) {
+  .manual-input-header {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-input-actions {
+    justify-content: flex-start;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .status-topline {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .data-source-switch {
+    width: 100%;
+  }
+
+  .data-source-switch button {
+    flex: 1;
+  }
+
+  .manual-input-panel {
+    padding: 20px;
+  }
+
+  .manual-input-actions {
+    flex-direction: column;
+  }
+
+  .manual-input-actions button {
+    width: 100%;
+  }
+}
